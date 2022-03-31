@@ -10,7 +10,8 @@ $ for domain in $(cat domains.txt);do ./flarectl zone create --zone=$domain --ju
 ```
 ```
 解析：
-$ for domain in $(cat domains.txt); do ./flarectl dns create --zone=$domain --name="www" --type="CNAME" --content="cname值"; done
+$ for domain in $(cat domains.txt); do ./flarectl dns create --zone=$domain --name="www" --type="CNAME" --content="cname值"; done  
+
 如果解析之存在则使用：create-or-update
 $ for domain in $(cat domains.txt); do ./flarectl dns create-or-update --zone=$domain --name="www" --type="CNAME" --content="cname值"; done
 ```
@@ -18,4 +19,7 @@ $ for domain in $(cat domains.txt); do ./flarectl dns create-or-update --zone=$d
 获取每个域的名称服务器：
 $ for domain in $(cat domains.txt);do ./flarectl zone info --zone=$domain; done
 ```
-
+```
+查看域名解析记录：
+$ for domain in $(cat domains.txt);do ./flarectl dns list --zone=$domain; done
+```

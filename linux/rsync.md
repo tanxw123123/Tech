@@ -71,9 +71,11 @@ pid file = /var/run/rsyncd.pid
 lock file = /var/run/rsync.lock
 log file = /var/log/rsyncd.log
 
-2. 创建保存auth user用户列表的用户名密码文件 /etc/rsync.password
+2. 创建保存auth user用户列表的用户名密码文件 /etc/rsyncd.secrets
 # cat /etc/rsyncd.secrets
 admin:123456
+
+# chmod 600 /etc/rsyncd.secrets
 
 3. 启动rsync daemon
 ubuntu系统
@@ -86,6 +88,8 @@ centos系统
 客户端配置
 # cat /etc/rsync.pass
 123456
+
+# chmod 600 /etc/rsync.pass
 
 测试：
 # rsync -avrp --delete --port=51800 source1/ rsync@192.168.254.12::data --password-file=/etc/rsync.pass

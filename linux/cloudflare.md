@@ -14,6 +14,9 @@ $ for domain in $(cat domains.txt); do ./flarectl dns create --zone=$domain --na
 
 如果解析之存在则使用：create-or-update
 $ for domain in $(cat domains.txt); do ./flarectl dns create-or-update --zone=$domain --name="www" --type="CNAME" --content="cname值"; done
+
+删除解析：
+$ for domain in $(cat domains.txt); do ./flarectl dns delete --zone=$domain --id="xxxxxxxxxxxxxxx"; done
 ```
 ```
 获取每个域的名称服务器：

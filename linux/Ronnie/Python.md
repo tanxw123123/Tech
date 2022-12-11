@@ -14,7 +14,7 @@ python解释器：cpython，CPython用`>>>`作为提示符。
 
 下载地址：https://www.python.org/ftp/python/3.8.10/python-3.8.10-amd64.exe
 
-![image-20221105074239810](C:\Users\xtanx\Desktop\typora\.assets\image-20221105074239810.png)
+![image-20221105074239810](D:\Ronnie\.assets\image-20221105074239810.png)
 
 特别要注意勾上`Add Python 3.8 to PATH`，然后点“Install Now”即可完成安装。
 
@@ -26,7 +26,7 @@ python解释器：cpython，CPython用`>>>`作为提示符。
 
 **a安装：**
 
-![image-20221105092900247](C:\Users\xtanx\Desktop\typora\.assets\image-20221105092900247.png)
+![image-20221105092900247](D:\Ronnie\.assets\image-20221105092900247.png)
 
 Create Associations创建关联，勾选.py，以后打开.py文件就会用PyCharm打开。
 
@@ -34,11 +34,11 @@ Create Associations创建关联，勾选.py，以后打开.py文件就会用PyCh
 
 **①：Don't Send（不要发送，不分享数据）**
 
-![image-20221105104805538](C:\Users\xtanx\Desktop\typora\.assets\image-20221105104805538.png)
+![image-20221105104805538](D:\Ronnie\.assets\image-20221105104805538.png)
 
 选择背景颜色：
 
-![image-20221105104903621](C:\Users\xtanx\Desktop\typora\.assets\image-20221105104903621.png)
+![image-20221105104903621](D:\Ronnie\.assets\image-20221105104903621.png)
 
 然后，新建项目就可以敲代码了！
 
@@ -70,7 +70,7 @@ easygui.msgbox(name + "nihao")
 
 效果如图：
 
-![image-20221105110013754](C:\Users\xtanx\Desktop\typora\.assets\image-20221105110013754.png)
+![image-20221105110013754](D:\Ronnie\.assets\image-20221105110013754.png)
 
 ## 5.python基础
 
@@ -143,7 +143,7 @@ print(b)
 
 ```
 
-![image-20221107112907140](C:\Users\xtanx\Desktop\typora\.assets\image-20221107112907140.png)
+![image-20221107112907140](D:\Ronnie\.assets\image-20221107112907140.png)
 
 ```python
 # 除法和地板除： /和//

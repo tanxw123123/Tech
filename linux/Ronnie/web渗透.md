@@ -21,11 +21,11 @@ a. 首先，登录owasp网页：
 
 - 账号：admin   密码：admin
 
-![image-20220831201237558](C:\Users\xtanx\Desktop\typora\.assets\image-20220831201237558.png)
+![image-20220831201237558](D:\Ronnie\.assets\image-20220831201237558.png)
 
 b. 调整安全级别：
 
-![image-20220831201546801](C:\Users\xtanx\Desktop\typora\.assets\image-20220831201546801.png)
+![image-20220831201546801](D:\Ronnie\.assets\image-20220831201546801.png)
 
 c. 然后，准备恶意php代码：
 
@@ -37,17 +37,17 @@ c. 然后，准备恶意php代码：
 
 d. 上传准备好的php恶意代码文件：
 
-![image-20220831202825534](C:\Users\xtanx\Desktop\typora\.assets\image-20220831202825534.png)
+![image-20220831202825534](D:\Ronnie\.assets\image-20220831202825534.png)
 
 e. 登陆windows渗透测试机器，打开中国菜刀连接：
 
 右击点击添加，
 
-![image-20220831223738830](C:\Users\xtanx\Desktop\typora\.assets\image-20220831223738830.png)
+![image-20220831223738830](D:\Ronnie\.assets\image-20220831223738830.png)
 
 进入文件管理，
 
-![image-20220831224002683](C:\Users\xtanx\Desktop\typora\.assets\image-20220831224002683.png)
+![image-20220831224002683](D:\Ronnie\.assets\image-20220831224002683.png)
 
 ### 2. medium 中安全级别，定义允许上传文件的mime类型
 
@@ -59,27 +59,27 @@ a. 开启burpsuite的代理功能（直接在kali上面操作）
 
 选择 proxy - options，添加端口代理转发：
 
-![image-20220901215309446](C:\Users\xtanx\Desktop\typora\.assets\image-20220901215309446.png)
+![image-20220901215309446](D:\Ronnie\.assets\image-20220901215309446.png)
 
 b. 开启代理拦截功能：
 
-![image-20220901215727626](C:\Users\xtanx\Desktop\typora\.assets\image-20220901215727626.png)
+![image-20220901215727626](D:\Ronnie\.assets\image-20220901215727626.png)
 
 c. 打开windows渗透机器，配置火狐浏览器使用burpsuite代理：
 
-![image-20220901220128755](C:\Users\xtanx\Desktop\typora\.assets\image-20220901220128755.png)
+![image-20220901220128755](D:\Ronnie\.assets\image-20220901220128755.png)
 
 d. 上传php文件：
 
-![image-20220901220521106](C:\Users\xtanx\Desktop\typora\.assets\image-20220901220521106.png)
+![image-20220901220521106](D:\Ronnie\.assets\image-20220901220521106.png)
 
 e. 此时，请求被burpsuite拦截了，这边将Content-Type类型改成 image/jpeg，然后点击Forward转发：
 
-![image-20220901220937674](C:\Users\xtanx\Desktop\typora\.assets\image-20220901220937674.png)
+![image-20220901220937674](D:\Ronnie\.assets\image-20220901220937674.png)
 
 此时我们可以看到已经上传成功了
 
-![image-20220901221155128](C:\Users\xtanx\Desktop\typora\.assets\image-20220901221155128.png)
+![image-20220901221155128](D:\Ronnie\.assets\image-20220901221155128.png)
 
 ### 3. high高安全级别，限制了文件的后缀名
 
@@ -129,7 +129,7 @@ e. 此时，请求被burpsuite拦截了，这边将Content-Type类型改成 imag
 
 数据库管理：
 
-![image-20220901223018762](C:\Users\xtanx\Desktop\typora\.assets\image-20220901223018762.png)
+![image-20220901223018762](D:\Ronnie\.assets\image-20220901223018762.png)
 
 ```mysql
 <T>MYSQL</T>
@@ -140,7 +140,7 @@ e. 此时，请求被burpsuite拦截了，这边将Content-Type类型改成 imag
 
 右击，进入数据库：
 
-![image-20220901223236403](C:\Users\xtanx\Desktop\typora\.assets\image-20220901223236403.png)
+![image-20220901223236403](D:\Ronnie\.assets\image-20220901223236403.png)
 
 ---
 
@@ -150,11 +150,11 @@ e. 此时，请求被burpsuite拦截了，这边将Content-Type类型改成 imag
 
 ### 1.通过主程序里的include包含
 
-![image-20220902103502243](C:\Users\xtanx\Desktop\typora\.assets\image-20220902103502243.png)
+![image-20220902103502243](D:\Ronnie\.assets\image-20220902103502243.png)
 
 例如：
 
-![image-20220902121843856](C:\Users\xtanx\Desktop\typora\.assets\image-20220902121843856.png)
+![image-20220902121843856](D:\Ronnie\.assets\image-20220902121843856.png)
 
 ### 2.本地文件包含
 
@@ -181,15 +181,15 @@ if (($uploaded_ext == "jpg" || $uploaded_ext == "JPG" || $uploaded_ext == "jpeg"
 > copy duck.jpg/b+shell.php duck1.jpg     #通过duck.jpg加上恶意代码shell.php生成木马图片duck1.jpg
 ```
 
-![image-20220902123943445](C:\Users\xtanx\Desktop\typora\.assets\image-20220902123943445.png)
+![image-20220902123943445](D:\Ronnie\.assets\image-20220902123943445.png)
 
 方法二：edjpgcom工具
 
 将图片拖动到.exe执行文件：
 
-![image-20220902131009198](C:\Users\xtanx\Desktop\typora\.assets\image-20220902131009198.png)
+![image-20220902131009198](D:\Ronnie\.assets\image-20220902131009198.png)
 
-![image-20220902131049745](C:\Users\xtanx\Desktop\typora\.assets\image-20220902131049745.png)
+![image-20220902131049745](D:\Ronnie\.assets\image-20220902131049745.png)
 
 在空白框填入我们的代码：
 
@@ -199,21 +199,21 @@ if (($uploaded_ext == "jpg" || $uploaded_ext == "JPG" || $uploaded_ext == "jpeg"
 
 **b. 上传木马图片**
 
-![image-20220902125209662](C:\Users\xtanx\Desktop\typora\.assets\image-20220902125209662.png)
+![image-20220902125209662](D:\Ronnie\.assets\image-20220902125209662.png)
 
 **c. 执行包含图片文件**
 
 查看图片文件路径：
 
-![image-20220902125503781](C:\Users\xtanx\Desktop\typora\.assets\image-20220902125503781.png)
+![image-20220902125503781](D:\Ronnie\.assets\image-20220902125503781.png)
 
 执行：
 
-![image-20220902125926601](C:\Users\xtanx\Desktop\typora\.assets\image-20220902125926601.png)
+![image-20220902125926601](D:\Ronnie\.assets\image-20220902125926601.png)
 
 **d. 查看已经生成木马文件shell2.php**
 
-![image-20220902130411724](C:\Users\xtanx\Desktop\typora\.assets\image-20220902130411724.png)
+![image-20220902130411724](D:\Ronnie\.assets\image-20220902130411724.png)
 
 **e. 然后通过菜刀连接**：https://192.168.254.177/dvwa/vulnerabilities/fi/shell2.php
 
@@ -232,25 +232,25 @@ $ vim /var/www/html/a.txt
 
 ```
 
-2.执行远程包含文件![image-20220902161827937](C:\Users\xtanx\Desktop\typora\.assets\image-20220902161827937.png)
+2.执行远程包含文件![image-20220902161827937](D:\Ronnie\.assets\image-20220902161827937.png)
 
 查看已经成功生成木马文件shell2.php
 
-![image-20220902162028271](C:\Users\xtanx\Desktop\typora\.assets\image-20220902162028271.png)
+![image-20220902162028271](D:\Ronnie\.assets\image-20220902162028271.png)
 
 - 中安全级别：
 
-![image-20220902215319661](C:\Users\xtanx\Desktop\typora\.assets\image-20220902215319661.png)
+![image-20220902215319661](D:\Ronnie\.assets\image-20220902215319661.png)
 
 可以看到，在中安全级别下，包含的文件对 http和https做了替换为空的操作。
 
 我在这里再插入一个 http:// 用来处理被替换的情况。即使它给我替换成空，我还是存在一个 http:// ，如下：
 
-![image-20220902215815476](C:\Users\xtanx\Desktop\typora\.assets\image-20220902215815476.png)
+![image-20220902215815476](D:\Ronnie\.assets\image-20220902215815476.png)
 
 - 高安全级别
 
-![image-20220902220013547](C:\Users\xtanx\Desktop\typora\.assets\image-20220902220013547.png)
+![image-20220902220013547](D:\Ronnie\.assets\image-20220902220013547.png)
 
 高安全级别下，后端代码写死了，只能包含 include.php这个文件！
 

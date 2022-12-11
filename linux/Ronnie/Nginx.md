@@ -83,7 +83,7 @@ WantedBy=multi-user.target
 
 我这里找的  ID 是 12708
 
-![image-20220908163443781](C:\Users\xtanx\Desktop\typora\.assets\image-20220908163443781.png)
+![image-20220908163443781](D:\Ronnie\.assets\image-20220908163443781.png)
 
 ---
 
@@ -143,7 +143,7 @@ http {
 
 **伪造X-Forwarded-For头的方法很简单，例如Postman就可以轻松做到：**
 
-![image-20220918211937527](C:\Users\xtanx\Desktop\typora\.assets\image-20220918211937527.png)
+![image-20220918211937527](D:\Ronnie\.assets\image-20220918211937527.png)
 
 此时查看web服务器日志如下：
 

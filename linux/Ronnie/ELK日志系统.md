@@ -2,7 +2,7 @@ https://juejin.cn/post/6963816831844876301
 
 架构：
 
-![image-20221012163252982](C:\Users\xtanx\Desktop\typora\.assets\image-20221012163252982.png)
+![image-20221012163252982](D:\Ronnie\.assets\image-20221012163252982.png)
 
 ## 1.集群版本
 

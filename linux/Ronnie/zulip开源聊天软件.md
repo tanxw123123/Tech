@@ -35,11 +35,11 @@ https://zulip.oball50.com/new/uoh2qqudsjkqaoa2azft7n6
 
 登录邮箱-设置-查看所有设置：
 
-![image-20221018111752119](D:\Ronnie\.assets\image-20221018111752119.png)
+![image-20221018111752119](D:\Tech\linux\Ronnie\.assets\image-20221018111752119.png)
 
 点击转发和POP/IMAP，启用IMAP，默认为停用状态，保存配置
 
-![image-20221018111931241](D:\Ronnie\.assets\image-20221018111931241.png)
+![image-20221018111931241](D:\Tech\linux\Ronnie\.assets\image-20221018111931241.png)
 
 获取授权码：
 
@@ -47,7 +47,7 @@ https://zulip.oball50.com/new/uoh2qqudsjkqaoa2azft7n6
 
 然后，选择应用专用密码，即为授权码
 
-![image-20221018115438041](D:\Ronnie\.assets\image-20221018115438041.png)
+![image-20221018115438041](D:\Tech\linux\Ronnie\.assets\image-20221018115438041.png)
 
 **b.修改配置文件**
 

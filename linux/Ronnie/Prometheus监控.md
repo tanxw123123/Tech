@@ -6,7 +6,7 @@
 
 **a. 原理图：**
 
-![image-20220903170837259](D:\Ronnie\.assets\image-20220903170837259.png)
+![image-20220903170837259](D:\Tech\linux\Ronnie\.assets\image-20220903170837259.png)
 
 **b. 相关组件：**
 
@@ -354,7 +354,7 @@ $ curl -d "hello python3" -X POST http://ip:8000/api/alert/haha
 
 在监控体系里面，通常我们认为监控分为：白盒监控和黑盒监控。
 
-![image-20220905215408679](D:\Ronnie\.assets\image-20220905215408679.png)
+![image-20220905215408679](D:\Tech\linux\Ronnie\.assets\image-20220905215408679.png)
 
 - 黑盒监控：主要关注的现象，一般都是正在发生的东西，例如出现一个告警，业务接口不正常，那么这种监控就是站在用户的角度能看到的监控，重点在于能对正在发生的故障进行告警。
 - 白盒监控：主要关注的是原因，也就是系统内部暴露的一些指标，例如 redis 的 info 中显示 redis slave down，这个就是 redis info 显示的一个内部的指标，重点在于原因，可能是在黑盒监控中看到 redis down，而查看内部信息的时候，显示 redis port is refused connection。

@@ -66,7 +66,7 @@ jenkins配置maven环境
 
 - 系统管理---系统配置---全局属性
 
-![image-20220906185138617](D:\Ronnie\.assets\image-20220906185138617.png)
+![image-20220906185138617](D:\Tech\linux\Ronnie\.assets\image-20220906185138617.png)
 
 ### 2.nodejs安装配置
 
@@ -97,7 +97,7 @@ Jenkins - SSH认证方式拉取Git代码
 $ ssh-keygen   # jenkins服务器生成密钥对，并将公钥上传git
 ```
 
-![image-20220906221430864](D:\Ronnie\.assets\image-20220906221430864.png)
+![image-20220906221430864](D:\Tech\linux\Ronnie\.assets\image-20220906221430864.png)
 
 新增任务时，添加git一直报错，想到是jenkins默认启动用户是jenkins，而我们上传到git的公钥是root用户的，在此我修改jenkins的启动用户为root：
 
@@ -117,7 +117,7 @@ $ systemctl restart jenkins
 
 a. 安装配置 Publish Over SSH 插件
 
-![image-20220907094709545](D:\Ronnie\.assets\image-20220907094709545.png)
+![image-20220907094709545](D:\Tech\linux\Ronnie\.assets\image-20220907094709545.png)
 
 配置ssh远程主机：
 

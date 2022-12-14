@@ -1202,6 +1202,8 @@ print(r)
 如果改为： r = re.findall("a[c-f]c",s)    # 表示c到f
 ```
 
+### 概括字符集
+
 ```python
 概括字符集：
 \d  \D
@@ -1210,19 +1212,81 @@ print(r)
 
 import re
 a = "python 111java8397php"
-r = re.findall("\w",a)   # 3-6区间，贪婪匹配
+r = re.findall("\w",a)
 print(r)
------------
+```
+
+### 数量词
+
+```python
 数量词：
+*  0次或多次
++  1次或多次
+?  0次或1次
+
 import re
 a = "python 111java8397php"
 r = re.findall("[a-z]{3,6}",a)   # 3-6区间，贪婪匹配
 print(r)
 
-r = re.findall("[a-z]{3,6}?",a)   # 加?表示非贪婪
+r = re.findall("[a-z]{3,6}?",a)   # 加?表示非贪婪（数量词后面的?表示非贪婪）
+-----------
+import re
+a = "pytho111python839pythonn89"
+r = re.findall("python*",a)    # *，代表n出现0次或多次
+print(r)
+['pytho', 'python', 'pythonn']  # 打印结果
+-----
+import re
+a = "pytho111python839pythonn89"
+r = re.findall("python?",a)    # ?，代表n出现0次到1次
+print(r)
+
+
+# 思考？
+import re
+a = "pytho111python839pythonn89"
+r = re.findall("python??",a)    
+print(r)
+
+- 上面正则出现的两个?分别代表什么意思。
+第一个?代表n匹配0次到1次；第二个?表示非贪婪，0次到1次的非贪婪就是0次。所以打印结果为：
+['pytho', 'pytho', 'pytho']
 ```
 
-fjklad
+### 边界匹配
+
+```python
+例： 匹配一个合法的qq号码
+首先正确的qq号码长度是5-10位
+
+import re
+qq = '12345678900'   # 这里是11位
+r = re.findall("\d{6,10}", qq)
+print(r)
+
+结果位： ['1234567890']
+
+很明显这不是我们想要的，我们是要匹配整个字符串是否符合正则规则，而不是包含
+改写成：
+r = re.findall("^\d{6,10}$", qq)
+```
+
+### 组
+
+```python
+() 代表组
+
+import re
+a = "PythonPythonPythonPython"
+r = re.findall('(Python){3}', a)   # Python匹配3次
+print(r)
+
+上面正则不能写成
+r = re.findall('Python{3}', a)   # 这个是代表n匹配3次，而不是Python整个字符串
+```
+
+
 
 ## 1x. 脚本
 
@@ -1253,5 +1317,18 @@ def sendtelegram(messages):
 if __name__ == "__main__":
     messages = get_messages()
     sendtelegram(messages)
+```
+
+```python
+# 合并excel表
+
+import pandas as pd
+from pathlib import Path
+files = Path("D:\\tables").glob("*.xlsx")
+dfs = [pd.read_excel(f) for f in files]
+df = pd.concat(dfs)
+df.to_excel("D:\\tables\\111.xlsx",index = False)
+
+-  将D:\tables目录下的所有.xlsx表全部合并成一个新的表111.xlsx
 ```
 

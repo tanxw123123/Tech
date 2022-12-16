@@ -219,6 +219,19 @@ print(a)
 a = "   shang hai    "
 print(a)
 print(a.strip())
+
+--------------------------------------------------------------
+字符串替换： replace
+a = "hello,world"
+a = a.replace("world", "python")   # 这里必须用变量接收一下，否则无法替换
+print(a)
+
+a = "hello,world,world,world"
+a = a.replace("world", "python", 1)  # 这里表示只替换第1个
+print(a)
+
+打印结果：
+hello,python,world,world
 ```
 
 ### 3.列表、元组、字典
@@ -1146,7 +1159,7 @@ student1.get_name()
 
 回答： 实例化一个类的时候，python内部执行构造函数会自动传入self；类直接调用实例方法是需要手动传入self
 如： Student.do_homework()  也会报错，正确方式：
-student1 = Student(.....)
+student1 = Student("tom", 19, "人民小学")   # 实例化一个对象
 student1.do_homework()
 ```
 
@@ -1202,13 +1215,14 @@ print(r)
 如果改为： r = re.findall("a[c-f]c",s)    # 表示c到f
 ```
 
-### 概括字符集
+### 1. 概括字符集
 
 ```python
 概括字符集：
-\d  \D
-\w 单词字符（字母数字下划线）  \W
-\s 空白字符(回车，制表符，空字符等，\n \t " ")    \S
+\d 数字  \D 非数字
+\w 单词字符（字母数字下划线）  \W 非单词字符
+\s 空白字符(回车，制表符，空字符等，\n \t " ")    \S 非空白字符
+.  匹配所有除换行符\n之外的所有字符
 
 import re
 a = "python 111java8397php"
@@ -1216,7 +1230,7 @@ r = re.findall("\w",a)
 print(r)
 ```
 
-### 数量词
+### 2.数量词
 
 ```python
 数量词：
@@ -1254,7 +1268,7 @@ print(r)
 ['pytho', 'pytho', 'pytho']
 ```
 
-### 边界匹配
+### 3.边界匹配
 
 ```python
 例： 匹配一个合法的qq号码
@@ -1272,7 +1286,7 @@ print(r)
 r = re.findall("^\d{6,10}$", qq)
 ```
 
-### 组
+### 4.组
 
 ```python
 () 代表组
@@ -1286,9 +1300,249 @@ print(r)
 r = re.findall('Python{3}', a)   # 这个是代表n匹配3次，而不是Python整个字符串
 ```
 
+### 5.匹配模式参数
+
+```python
+import re
+a = "Python12C#456Java789PHP"
+r = re.findall('c#', a, flags=re.I)
+print(r)
+
+- 匹配模式re.I表示忽略大小写；上面例子，如果不加flags=re.I ，那么就匹配不到c#
 
 
-## 1x. 脚本
+import re
+a = "Python12C#\n456Java789PHP"
+r = re.findall('c#.{1}', a, flags=re.I)
+print(r)
+
+- 上面.表示除换行符之外的所有字符，所以.{1}匹配不到\n, 要想匹配到\n。增加re.S匹配模式。
+import re
+a = "Python12C#\n456Java789PHP"
+r = re.findall('c#.{1}', a, flags=re.I | re.S)  # 这里的 | 代表同时支持两种匹配模式，不是或的关系
+print(r)
+
+# 打印结果：
+['C#\n']
+```
+
+### 6.替换
+
+```python
+re.sub 
+
+import re
+a = "Python12C#456Java7C#89PHP11C#"
+r = re.sub('c#', "GO", a, flags = re.I)
+print(r)
+
+- 将C#替换成GO
+- 默认替换所有的C#为GO
+
+
+如果只想替换第1个怎么办呢？
+r = re.sub('c#', "GO", a, 1, flags = re.I)
+- 这里的1表示只替换第1个，2代表第2个，以此类推...
+
+-----------------------
+替换成函数：
+import re
+
+def func(value):
+    pass
+a = "Python12C#456Java7C#89PHP11C#"
+r = re.sub('c#', func, a, flags = re.I)
+print(r)
+
+打印结果：
+Python12456Java789PHP11
+- C#消失了，因为这里func函数什么都没做
+
+---
+import re
+
+def func(value):
+    print(value)
+a = "Python12C#456Java7C#89PHP11C#"
+r = re.sub('c#', func, a, flags = re.I)
+
+- 执行结果：
+<re.Match object; span=(8, 10), match='C#'>
+<re.Match object; span=(18, 20), match='C#'>
+<re.Match object; span=(27, 29), match='C#'>
+
+# 想要取值，加上value.group(),如下：
+import re
+
+def func(value):
+    value = value.group()
+    print(value)
+a = "Python12C#456Java7C#89PHP11C#"
+r = re.sub('c#', func, a, flags = re.I)
+
+- 执行结果：
+C#
+C#
+C#
+
+所以，如果要替换'C#'为 '!!C#!!'
+改写函数：
+import re
+
+def func(value):
+    value = value.group()
+    return "!!" + value + "!!"
+a = "Python12C#456Java7C#89PHP11C#"
+r = re.sub('c#', func, a, flags = re.I)
+print(r)
+
+执行结果：
+Python12!!C#!!456Java7!!C#!!89PHP11!!C#!!
+
+-------------------
+替换函数实例：
+import re
+a = "A23B987CDE06F"
+# 将字符串中数字大于等于6的替换为9，小于6的替换为0
+def func(value):
+    value = value.group()
+    if int(value) >=6:   #因为value是字符，所以要转换为int类型比较
+        return "9"
+    else:
+        return "0"
+
+r = re.sub('\d', func, a)
+print(r)
+```
+
+### 7.match和search
+
+```python
+# match
+import re
+a = "23B987CDE06F"
+r = re.match('\d', a)   # match函数从字符串开头匹配，匹配到1个就结束，匹配不到返回None
+print(r.group())
+
+# search
+import re
+a = "A23B987CDE06F"
+r = re.search('\d', a)  # search函数从整个字符串匹配，匹配到1个就结束，匹配不到返回None
+print(r.group())
+
+# 分组
+import re
+a = "life is short, I use python, I love python"
+r = re.search("life(.*)python(.*)python", a)
+print(r.group())  #默认返回整个匹配到的字符串
+print(r.group(1))  # 返回第1个分组
+print(r.group(2))
+print(r.group(1,2))  # 返回一个元组
+print(r.groups())    # 同上，返回一个元组
+
+# findall也能实现
+r = re.findall("life(.*)python(.*)python", a)
+print(r)
+
+```
+
+
+
+### 小结：
+
+```mermaid
+graph LR;
+正则表达式-->字符
+正则表达式-->函数;
+字符-->概括字符集;
+字符-->数量词;
+字符-->A["边界匹配<br>^$"];
+函数-->B[re.findall];
+函数-->re.sub;
+函数-->re.match;
+函数-->re.search;
+概括字符集-->C(\d 数字<br>\D 非数字<br>\w 单词字符,字母数字下划线<br>\W 非单词字符<br>\s 空白字符-<回车,制表符,空字符等,\n \t><br>\S 非空白字符<br>. 匹配所有除换行符\n之外的所有字符)
+数量词-->D("* 0次或多次<br>+ 1次或多次<br>? 0次或1次<br>{3,6} 3次到6次<br><br>数量词后面跟 '?' 表示非贪婪匹配<br>{3,6}? 非贪婪，即3次<br>r = re.findall('python??', string) 第1个 ? 表示字母n匹配0次或1次，第2个 ? 表示非贪婪 ")
+A-->E["如: 匹配一个数字串是否是QQ!<br>qq = '12345678'<br>r = re.findall('^\d{6,10}$', qq)"]
+B-->F["返回一个列表 [ ]<br>r = re.findall(pattern, string, flags=re.I | re.S)<br>re.I 表示忽略大小写<br>re.S 表示 . 可以匹配换行符\n<br><br>[abc] 表示 '或' <br>[a-z] 表示 A到Z"]
+re.sub-->G["re.sub(pattern, repl, string[, count],flags=re.I | re.S)<br>如果要替换的repl是一个函数, 则将要替换的正则带入函数<br>得到一个对象,取值的话,value.group()"]
+re.match-->H["从字符串开头匹配，匹配到1个就结束，匹配不到返回None"]
+re.search-->I["从整个字符串匹配，匹配到1个就结束，匹配不到返回None<br>分组:<br>a = 'life is short, I use python, I love python'<br>r = re.search('life(.*)python(.*)python', a)<br>print(r.groups()),或<br>print(r.group(1,2))"]
+```
+
+
+
+## 11.JSON
+
+什么是json？
+
+- 轻量级的数据交换格式
+
+```json
+json可以用于跨语言交换数据
+
+- json字符串
+json_str = '{"name": "lucy", "age": 18}'    # 正确
+json_str = "{'name': 'lucy', 'age': 18}"    # 错误，json字符串里面必须用双引号，不能用单引号
+
+```
+
+```python
+反序列化： 将字符串->语言下面的某种数据结构
+import json
+json_str = '{"name": "lucy", "age": 18}'
+a = json.loads(json_str)
+print(a)
+
+
+数组，array
+import json
+json_str = '[{"name": "lucy", "age": 18}, {"score": 89, "gender": "female", "flags": false}]'
+a = json.loads(json_str)
+print(type(a))
+执行结果：
+<class 'list'>
+[{'name': 'lucy', 'age': 18}, {'score': 89, 'gender': 'female', 'flags': False}]
+可以看到，python里把小写的false变成了大写的False。
+```
+
+```python
+序列化
+import json
+a = [
+      {"name": "lucy", "age": 18},
+      {"score": 89, "gender": "female", "flags": False}
+    ]
+json_str = json.dumps(a)
+print(type(json_str))
+print(json_str)
+```
+
+json和python数据对应关系
+
+| json   | python      |
+| ------ | ----------- |
+| object | dict        |
+| array  | list        |
+| string | str         |
+| number | int / float |
+| true   | True        |
+| false  | False       |
+| null   | None        |
+
+### 小结：
+
+```mermaid
+graph LR;
+A[A语言<br>A语言的数据类型]-->C[Json<br>中间数据类型];
+B[B语言<br>B语言的数据类型]-->C;
+Json-->D["序列化 <br>json.dumps()"]
+Json-->E["反序列化<br>json.loads()"]
+```
+
+
+
+## 12. 脚本
 
 ```python
 # 实时获取USDT兑换人民币汇率
@@ -1303,11 +1557,9 @@ def get_messages():
     url = "https://coinmarketcap.com/zh/currencies/tether/"
     html = requests.get(url).content   # 获取网页内容，类型为bytes
     html = str(html, "utf-8")     # 将bytes类型转换为字符串类型
-    r = re.findall("<div class=\"priceValue \">.*?</div>", html)  # ?表示非贪婪匹配
-    r = str(r)
-    res = re.findall("\d.*\d",r)
-    res = ''.join(res)
-    messages = "当前USDT兑人民币实时汇率为:  {}".format(res)
+    r = re.findall('<div class="priceValue "><span>¥(.*?)</span></div>', html)  # ?表示非贪婪匹配
+    r = ''.join(r)
+    messages = "当前USDT兑人民币实时汇率为:  {}".format(r)
     return messages
 
 def sendtelegram(messages):

@@ -215,7 +215,7 @@ a = f"hello, {s:.2f}"
 print(a)
 
 --------------------------------------------------------------
-删除首位空格： strip()
+删除首尾空格： strip()
 a = "   shang hai    "
 print(a)
 print(a.strip())
@@ -394,6 +394,39 @@ for i in range(1,10):
 ```
 
 ---
+
+### 小结：
+
+```mermaid
+graph LR;
+A["Python基础"]-->B["数据类型"]
+B-->C["数值"]
+B-->D["字符（str）"]
+B-->R["列表(可变类型)"]
+B-->S["元组(不可变类型)"]
+B-->T["字典: 速度快，占内存"]
+R-->U["append('value') 追加到末尾<br>insert(i, 'value') 插入指定位置<br>pop() 删除末尾<br>pop(i) 删除指定<br>remove('value') 删除指定"]
+S-->V["空元组： a = ()<br> a = (1,)"]
+T-->W["get()方法：dict.get('key')<br>删除key： dict.pop('key')"]
+B-->E["布尔值（bool）"]
+B-->F["空置（None）"]
+C-->G["整数（int）<br>a = 10_000_000"]
+C-->H["浮点（float）<br>1.23x10的9次方： 1.23e9<br>0.000012 : 1.2e-5"]
+D-->I["转义符： \<br>换行符：\n 或者 '''内容'''<br>制表符：\t<br>不转义： r' ' ;如:print(r'hello\nworld')"]
+E-->J["and、or、not<br>True | False"]
+A-->K["变量"]
+K-->L["变量可以是，任意数据类型<br>这种变量本身类型不固定的语言称之为动态语言，java属于静态语言；<br>a = 'hello'<br>首先开辟一块内存空间写入hello；再开辟一块内存创建变量a，将a指向hello"]
+A-->M["字符和编码"]
+M-->N["编码"]
+M-->O["字符"]
+N-->P["ASCII：127个字符，大小写英文字母、数字和一些符号<br>Unicode：包含所有语言的编码，但存储空间比ASCII码多一倍<br>UTF-8（可变长编码）：英文字母被编码成1个字节，汉字通常是3个字节<br>编解码：<br>'中文'.encode('utf-8')<br>b'\xe4\xb8\xad\xe6\x96\x87'.decode('utf-8')"]
+O-->Q["格式化字符串<br><br>1. 'Hi, %s, you have $%d.' % ('Michael', 1000000)<br>2. 'Hello, {0}, 成绩提升了 {1:.1f}%'.format('小明', 17.125)<br>删除首位空格：strip()<br>替换：replace"]
+A-->X["循环"]
+X-->Y["for循环和while循环<br><br>continue: 结束当此循环,进入下一次循环<br>break: 结束整个循环"]
+
+```
+
+
 
 ## 6.函数
 
@@ -1186,6 +1219,23 @@ class Student(Human):
 student1 = Student("tom",19,"人民小学")
 student1.do_homework()
 ```
+
+### 小结:
+
+```mermaid
+graph LR;
+A["面向对象"]-->B["类和对象"];
+A-->C["构造函数"];
+A-->D["方法"];
+A-->H["变量"]
+B-->E["class: 类，创建实例的模板<br>instance: 实例，根据类创建的一个个对象"]
+C-->F["__init__<br>通过类实例化一个对象，会自动执行构造函数<br>self, 创建的实例本身"]
+D-->G["类方法: @classmethod<br>实例方法: "]
+H-->I["类变量<br>实例变量"]
+B-->J["属性：<br>1. 对象属性： 对象.__dict__<br>2. 一个对象不能访问另一个对象的属性<br>3. 类属性和对象属性"]
+```
+
+
 
 ## 10.正则表达式
 

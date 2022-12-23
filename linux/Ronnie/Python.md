@@ -420,7 +420,7 @@ A-->M["字符和编码"]
 M-->N["编码"]
 M-->O["字符"]
 N-->P["ASCII：127个字符，大小写英文字母、数字和一些符号<br>Unicode：包含所有语言的编码，但存储空间比ASCII码多一倍<br>UTF-8（可变长编码）：英文字母被编码成1个字节，汉字通常是3个字节<br>编解码：<br>'中文'.encode('utf-8')<br>b'\xe4\xb8\xad\xe6\x96\x87'.decode('utf-8')"]
-O-->Q["格式化字符串<br><br>1. 'Hi, %s, you have $%d.' % ('Michael', 1000000)<br>2. 'Hello, {0}, 成绩提升了 {1:.1f}%'.format('小明', 17.125)<br>删除首位空格：strip()<br>替换：replace"]
+O-->Q["格式化字符串<br><br>1. 'Hi, %s, you have $%d.' % ('Michael', 1000000)<br>2. 'Hello, {0}, 成绩提升了 {1:.1f}%'.format('小明', 17.125)<br>'Hello, {0}, 成绩提升了 {1:.1%}'.format('小明', 0.178)<br>删除首位空格：strip()<br>替换：replace"]
 A-->X["循环"]
 X-->Y["for循环和while循环<br><br>continue: 结束当此循环,进入下一次循环<br>break: 结束整个循环"]
 
@@ -531,6 +531,26 @@ calc(1,2,3)
 - 关键字参数
 
 ```
+
+---
+
+### 小结：
+
+```mermaid
+graph LR;
+A["函数"]-->B["调用函数"]
+A-->C["定义函数"]
+B-->D["python内置函数<br>如：int()、abs()、max()"]
+C-->E["返回值"]
+E-->J["返回单个值：根据本身类型<br>返回多个值：返回元组类型"]
+C-->F["参数"]
+F-->G["1. 位置参数<br>def func(x):"]
+F-->H["2. 默认参数: 必须指向不变对象<br>def func(x,n=2)"]
+F-->I["3. 可变参数<br>def func(*num)<br>如，计算：a**2+b**2+c**2"]
+F-->K["4. 关键字参数"]
+```
+
+
 
 ## 7.高级特性
 
@@ -655,6 +675,31 @@ print(isinstance(list1,Iterator))
 
 迭代器一定是可迭代对象，可迭代对象不一定是迭代器！！！
 ```
+
+---
+
+### 小结：
+
+```mermaid
+graph LR;
+A["高级特性"]-->B["切片"]
+A-->C["推导式"]
+A-->D["迭代<br>可以for循环遍历的"]
+A-->E["迭代器<br>1. 可以for循环遍历的<br>2. 可以next()调用的"]
+A-->F["生成器"]
+B-->G["切片对象：字符串、列表、元组<br>[:3] 索引0到2<br>[1:3] 索引1到2<br>[:10:2] 前10，每隔2个取一个<br>[::2] 所有，每隔2个取一个"]
+C-->H["列表推导式"]
+C-->I["集合推导式"]
+C-->J["字典推导式"]
+H-->K["[i * i for i in range(10)]<br>[i * i for i in range(10) if i%2 == 0]<br>[i if i%2 == 0 else -i for i in range(10)] # if在for之前必须加else"]
+I-->L["a = [1,2,2,4,6,6,8]<br>set1 = {i for i in a} # 集合去重"]
+J-->M["a = {'a': 1, 'b':2, 'c':3}<br>dic1 = {v: k for k,v in a.items()}"]
+D-->N["判断可迭代对象<br>from collections.abc import Iterable<br>isinstance(100, Iterable)<br><br>迭代字典：<br>for i in dict: # 迭代key<br>for i in dict.values(): # 迭代value<br>for i in dict.items(): # 迭代key和value<br>列表<br>迭代索引+元素<br>for i,value in enumerate(a): # enumerate函数"]
+E-->O["可迭代对象转换为迭代器： iter()<br>判断是否是迭代器: from collections.abc import Iterable,Iterator<br><br>迭代器一定是可迭代对象，可迭代对象不一定是迭代器！！！"]
+F-->P["1. 生成器推导式：<br>(i for i in range(10))<br><br>2. 生成器函数：yield关键字<br>遇到 yield 返回，再次执行从上次 yield 返回处继续执行"]
+```
+
+
 
 ## 8.函数式编程
 
@@ -965,7 +1010,7 @@ house()
 
 
 ------
-总结： 先执行里函数近的装饰器
+总结： 先执行离函数近的装饰器
 ```
 
 ### 7.偏函数
@@ -997,6 +1042,27 @@ print(a)
 # 这样我就可以int2("1234") 这样直接转换了，而不需要 int("1234", base=16)
 
 ```
+
+---
+
+### 小结：
+
+```mermaid
+graph LR;
+A["函数式编程"]-->B["变量的作用域"]
+A-->C["函数的作用域"]
+A-->D["高阶函数"]
+A-->E["返回函数"]
+A-->F["匿名函数"]
+A-->K["装饰器"]
+B-->G["1. 函数可以调用全局变量，但不能修改;想要修改, 加global关键字<br>2. 如果全局变量是个可变类型，如列表。那么函数里面就可以修改<br><br>变量搜索规则： LEGB"]
+C-->H["内部函数调用外部函数的变量: nonlocal"]
+D-->I["什么是高阶函数？<br>一个函数就可以接收另一个函数作为参数<br><br>map() 接收两个参数，一个是函数，一个是Iterable<br>filter() 根据返回值是True或False决定保留还是丢弃"]
+E-->J["闭包<br>1. 一个函数中定义了另一个函数。<br>2. 内部函数使用了外部函数变量。<br>3. 外部函数的返回值是内部函数<br><br>查看函数调用次数:<br>n = sys.getrefcount(func)"] 
+K-->L["在代码运行期间动态增加功能的方式，称之为“装饰器”（Decorator）<br>开放封闭原则<br><br>装饰器：闭包+函数作为参数<br><br>装饰器带参数<br>多个装饰器装饰一个函数： 先执行离函数近的装饰器"]
+```
+
+
 
 ## 9.面向对象编程
 
@@ -1232,7 +1298,7 @@ B-->E["class: 类，创建实例的模板<br>instance: 实例，根据类创建�
 C-->F["__init__<br>通过类实例化一个对象，会自动执行构造函数<br>self, 创建的实例本身"]
 D-->G["类方法: @classmethod<br>实例方法: "]
 H-->I["类变量<br>实例变量"]
-B-->J["属性：<br>1. 对象属性： 对象.__dict__<br>2. 一个对象不能访问另一个对象的属性<br>3. 类属性和对象属性"]
+B-->J["属性：<br>1. 对象属性： 对象.__dict__<br>2. 一个对象不能访问另一个对象的属性<br>3. 类属性和对象属性<br><br>属性和变量判定依据： 是否有宿主<br><br>限制对象属性的添加：slots<br>class Student: # 定义一个类名<br>__slots__ = ['name']<br>限制对象属性只能添加name属性"]
 ```
 
 
@@ -1592,7 +1658,68 @@ Json-->E["反序列化<br>json.loads()"]
 
 
 
-## 12. 脚本
+## 12.IO编程
+
+### 1.文件读写
+
+`读文件`
+
+```python
+f = open("D:\\ronnie\\111.txt", 'r')   # 标识符'r'表示读
+a = f.read()
+print(a)
+f.close()   # 文件使用完毕后必须关闭，因为文件对象会占用操作系统的资源,并且操作系统能打开的文件数量是有限的
+```
+
+Python引入了`with`语句来自动帮我们调用`close()`方法：
+
+```python
+with open('/path/to/file', 'r') as f:
+    print(f.read())
+```
+
+
+
+```python
+# 调用read()会一次性读取文件的全部内容，如果文件有10G，内存就爆了
+- 保险起见，可以反复调用read(size)方法，每次最多读取size个字节的内容；
+- 调用readline()可以每次读取一行内容
+
+f = open("D:\\ronnie\\111.txt", 'r')
+print(f.readline().strip())   # 去除\n
+print(f.readline().strip())
+print(f.readline().strip())
+f.close()
+
+f = open("D:\\ronnie\\111.txt", 'r')
+print(f.readlines())  # readlines()一次读取所有内容并按行返回list
+f.close()
+执行结果：
+['hello;im 111\n', '222\n', '333\n', '4444\n', '5555']
+
+二进制文件
+要读取二进制文件，比如图片、视频等等，用'rb'模式打开文件即可:
+>>> f = open('/Users/michael/test.jpg', 'rb')
+>>> f.read()
+b'\xff\xd8\xff\xe1\x00\x18Exif\x00\x00...' # 十六进制表示的字节
+```
+
+`写文件`
+
+```python
+with open("D:\\ronnie\\111.txt", 'w') as f:
+    f.write("hello\nworld\npython")
+    
+以'w'模式写入文件时，如果文件已存在，会直接覆盖（相当于删掉后新写入一个文件）。如果我们希望追加到文件末尾怎么办？
+- 'a'以追加（append）模式写入
+
+with open("D:\\ronnie\\111.txt", 'a') as f:
+    f.write("\n123\n456")
+```
+
+
+
+## 13. 脚本
 
 ```python
 # 实时获取USDT兑换人民币汇率

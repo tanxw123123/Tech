@@ -42,6 +42,14 @@ Create Associations创建关联，勾选.py，以后打开.py文件就会用PyCh
 
 然后，新建项目就可以敲代码了！
 
+
+
+**c.PyCharm修改Interpreter**
+
+file ->setting->project ->project interpreter：
+
+![image-20221228132954279](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20221228132954279.png)
+
 ## 4.输入和输出
 
 ```python
@@ -1662,7 +1670,14 @@ Json-->E["反序列化<br>json.loads()"]
 
 ### 1.文件读写
 
-`读文件`
+i.`进入目录`
+
+```python
+os.chdir('D:/source/dataset')  #进入目录
+os.listdir()   #列出目录下文件，返回一个列表[]
+```
+
+ii.`读文件`
 
 ```python
 f = open("D:\\ronnie\\111.txt", 'r')   # 标识符'r'表示读
@@ -1704,7 +1719,7 @@ f.close()
 b'\xff\xd8\xff\xe1\x00\x18Exif\x00\x00...' # 十六进制表示的字节
 ```
 
-`写文件`
+iii.`写文件`
 
 ```python
 with open("D:\\ronnie\\111.txt", 'w') as f:
@@ -1759,5 +1774,229 @@ df = pd.concat(dfs)
 df.to_excel("D:\\tables\\111.xlsx",index = False)
 
 -  将D:\tables目录下的所有.xlsx表全部合并成一个新的表111.xlsx
+```
+
+## 14.爬虫
+
+第一个爬虫程序！
+
+```python
+import requests
+url = "https://img.win3000.com/m00/b8/b0/4e09d5101850a3f84d019da9d53e9e6a.jpg"
+html = requests.get(url).content   # 类型为bytes类型
+with open("D:\picture\\1.jpg", "wb") as f:
+    f.write(html)
+```
+
+```python
+# Adult picture 
+import requests
+import os
+import re
+def show():
+    url = "https://sexynakedgirls.xxx/"
+    html = requests.get(url).content    # 获取网页内容(bytes类型)
+    html = str(html, "utf-8")    # 将二进制bytes类型转换为str类型，方便正则匹配
+    r = re.findall('<a style="padding-bottom.*?href="(.*?)"', html)  # 匹配分组()里的内容，以列表方式返回
+    return r
+
+def choose():   #获取图片类型链接
+    a = show()
+    for i,value in enumerate(a):  # 获取列表的索引和值
+        print(i+1, value)
+    b = int(input("请选择您要下载的类型编号："))
+    url = "https://sexynakedgirls.xxx" + a[b-1]
+    return url
+
+def download():
+    url = choose()
+    html = requests.get(url).content
+    html = str(html, "utf-8")
+    res = re.findall('<a style="padding-bottom.*?(https:.*?)"', html)
+    for i, url in enumerate(res):
+        os.mkdir("D:\picture\\" + str(i+1))   # 创建目录
+        html = requests.get(url).content
+        html = str(html, "utf-8")
+        r = re.findall('<a class="item" data-w=.*?href="(.*?)"', html)
+        for j, value in enumerate(r):
+            html = requests.get(value).content   
+            with open("D:\picture\\" + str(i+1) + "\\" + str(j + 1) + ".jpg", "wb") as f:  # with方法会自动调用 close(),注意二进制写入要用‘wb’
+                f.write(html)
+
+
+if __name__ == "__main__":
+    download()
+```
+
+---
+
+
+
+爬取信息并存入excel表：
+
+```python
+import requests
+import re
+import openpyxl   # excel处理模块
+
+def main():
+    url = "https://yuehui.163.com/"
+    html = requests.get(url).content
+    html = str(html, "utf-8")
+    name = re.findall('"_blank" class="nick">(.*?)</a>', html)
+    name = [i.replace("\u2006", " ").strip() for i in name]   # 将\u2006替换为空
+    all = re.findall('<p class="info">(.*?)</p>', html)
+    age = [i.split("\u3000")[0] for i in all]     # 字符串切分，以‘\u3000’作为切分，返回列表，然后再取值0号索引的值
+    address = [i.split("\u3000")[1] for i in all]
+    job = [i.split("\u3000")[2] for i in all]
+
+    wb = openpyxl.Workbook()   # 打开文件
+    sheet1 = wb.active   # 创建表
+    sheet1.append(['姓名', '年龄', '地址', '工作'])   # 往表里插入数据，按行
+    for i, value in enumerate(name):
+        sheet1.append([name[i], age[i], address[i], job[i]])   # 循环插入数据
+
+    wb.save('test103.xlsx')    # 保存为文件
+
+if __name__ == "__main__":
+    main()
+```
+
+### 1.scrapy框架
+
+#### 1.安装scrapy框架
+
+`i.安装wheel`
+
+```
+> pip install wheel
+```
+
+
+
+`ii.安装Lxml`
+
+[下载Lxml](https://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml)，cp37对应py3.7
+
+```shell
+> pip install C:\路径\lxml-4.8.0-cp37-cp37m-win_amd64.whl
+下载twisted
+```
+
+
+
+`iii.安装twisted`
+
+```
+> pip install twisted
+```
+
+
+
+`iv.下载Pywin32 --一定要下对应python版本`
+
+[下载Pywin32](https://sourceforge.net/projects/pywin32/files/pywin32/Build%20221/)
+
+安装，无脑下一步
+
+
+
+`v.最后，安装scrapy`
+
+```
+> pip install scrapy
+```
+
+
+
+第一个scrapy爬虫程序：
+
+```python
+import scrapy
+
+
+class QuotesSpider(scrapy.Spider):
+    name = 'quotes'
+    start_urls = [
+        'https://quotes.toscrape.com/tag/humor/',
+    ]
+
+    def parse(self, response):
+        for quote in response.xpath('//div[@class="quote"]'):
+        # for quote in response.css('div.quote'):
+            yield {
+                'author': quote.css('span small.author::text').get(),
+                # 'author': quote.xpath('span/small/text()').get(),
+                'text': quote.css('span.text::text').get(),
+            }
+```
+
+`运行：`
+
+```shell
+ > scrapy runspider c2.py -o quotes100.jsonl  #保存到quotes100.jsonl文件
+```
+
+---
+
+
+
+#### 2.第一个爬虫项目
+
+- 在新建项目之前，需要修改 `settings.py` 文件，否则根据爬虫协议，很多网站不能爬
+
+```shell
+打开文件 ..\project01\project01\settings.py
+
+# Obey robots.txt rules
+ROBOTSTXT_OBEY = False       # 修改为False，默认为True
+```
+
+
+
+`i.新建项目`
+
+```shell
+> scrapy startproject project01          # project01为项目名
+```
+
+
+
+`ii.创建爬虫，指定爬取域的范围`
+
+```shell
+> cd project01
+> scrapy genspider itcast "itcast.cn"    # itcast为爬虫名
+```
+
+
+
+`iii.编辑代码`
+
+打开文件 `..\project01\project01\spiders\itcast.py` ,编辑
+
+```python
+import scrapy
+
+
+class ItcastSpider(scrapy.Spider):
+    name = 'itcast'
+    allowed_domains = ['itcast.cn']
+    start_urls = ['http://www.itcast.cn/channel/teacher.shtml']     #修改为要爬取的链接
+
+    def parse(self, response):
+        filename = "teacher.html"
+        with open(filename, "wb") as f:
+            f.write(response.body)
+```
+
+
+
+`iv.启动爬虫`
+
+```shell
+> scrapy crawl itcast
+
+# 会生成一个teacher.html的文件，保存了爬取的网页内容源代码
 ```
 

@@ -1,4 +1,24 @@
-## 1.安装
+## 1.CI/CD
+
+`1.持续集成 CI`
+
+开发人员提交代码，整合代码的过程
+
+
+
+`2.持续交付 CD (DELIVERY)`
+
+运维人员拉取代码，部署到生产环境；持续交付就是讲我们的应用发布出去的过程
+
+如；苹果发布ios 14
+
+
+
+`3.持续部署 CD (DEPLOYMENT)`
+
+部署，我们点击手机更新 ios 14
+
+## 2.安装
 
 centos系统：
 
@@ -19,7 +39,7 @@ $ sudo systemctl daemon-reload
 
 
 
-## 2.配置
+## 3.配置
 
 依赖环境安装
 因为需要对一些项目进行打包，因此需要安装这些环境的依赖，这里我们就安装jdk、git、maven(java项目)，nodejs(前端项目)即可。
@@ -126,4 +146,48 @@ a. 安装配置 Publish Over SSH 插件
   
 
   
+
+## 4.参数化构建
+
+`i.字符参数(String Parameter)`
+
+![image-20230105102354156](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102354156.png)
+
+`ii.选项参数(Choice Parameter)`
+
+![image-20230105102524965](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102524965.png)
+
+`iii.构建`
+
+![image-20230105102654510](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102654510.png)
+
+---
+
+
+
+## 5.管理员密码忘记
+
+1.删除Jenkins目录下config.xml文件中下面代码并保存
+
+![image-20230104180026396](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104180026396.png)
+
+2.重启jenkins
+
+```shell
+$ systemctl restart jenkins
+```
+
+3.进入首页>“系统管理”>“Configure Global Security”；点选“Jenkins专有用户数据库”，并点击“保存”
+
+![image-20230104181311817](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104181311817.png)
+
+4.重新点击首页>“系统管理”,发现此时出现“管理用户”
+
+![image-20230104181419505](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104181419505.png)
+
+然后修改密码！！
+
+5.禁止匿名用户登陆
+
+![image-20230104185746519](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104185746519.png)
 

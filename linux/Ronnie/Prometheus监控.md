@@ -406,7 +406,7 @@ scrape_configs:
     params:
       module: [http_2xx]
     file_sd_configs:
-    - refresh_interval: 1m
+    - refresh_interval: 1m      # 抓取周期为1分钟
       files:
       - "/data/prometheus/blackbox/test.yml"
     relabel_configs:
@@ -442,5 +442,26 @@ groups:
     annotations:
       summary: "告警主机: {{ $labels.job }}"
       description: '告警问题:{{ $labels.instance }}的证书还有{{ printf "%.1f" $value }}天就过期了，请尽快更新证书'
+```
+
+
+
+## 小结：
+
+```mermaid
+graph LR;
+A["Prometheus"]-->B["prometheus server"]
+A-->C["Exporter"]
+A-->D["AlertManager"]
+A-->E["web UI"]
+B-->F["核心组件，获取监控数据及存储"]
+C-->G["业务数据源<br>如，使用最多的 node_exporter"]
+D-->H["配置邮件或程序告警"]
+E-->I["如，Grafana等"]
+A-->J["服务发现"]
+J-->L["静态服务发现<br>static_configs"]
+J-->M["动态服务发现<br>file_sd_configs、dns_sd_configs等等"]
+F-->N["获取数据方式：pull、push<br>pull: (prometheus server)-->exporter(数据源)<br>push(数据源)-->pushgateway<--pull(prometheus server)"]
+
 ```
 

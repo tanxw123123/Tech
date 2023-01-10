@@ -202,7 +202,9 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 - 自定义请求头名称：X-Real-IP。
 - 请求头参数：$remote_addr。
 
-## 4.配置文件优化
+## 4.Nginx优化
+
+配置文件：
 
 ```shell
 #user  nginx nginx;
@@ -365,9 +367,106 @@ http {
 }
 ```
 
----
+调优：
+
+```shell
+1. 进程优化
+worker 进程数默认为 1 ；worker_processes 这个参数最好是设置成 auto
+
+2. 绑定 Nginx 进程到不同的 CPU 上
+worker_processes  2;         # 2核CPU的配置
+worker_cpu_affinity 01 10;
+
+worker_processes  4;         # 4核CPU的配置
+worker_cpu_affinity 0001 0010 0100 1000;
+
+worker_processes  8;         # 8核CPU的配置
+worker_cpu_affinity 00000001 00000010 00000100 00001000 00010000 00100000 01000000 1000000;
+或
+worker_cpu_affinity auto;
+
+3. Nginx 单个进程允许的最大连接数
+events {
+    worker_connections 65535;
+}
+
+# Nginx 总并发连接数 = worker_processes * worker_connections。总数保持在 3w 左右即可。
+
+4.Nginx worker 进程打开的最大文件数
+worker_rlimit_nofile 65535;
+
+5.客户端连接保持会话的超时时间，超过这个时间服务器会关闭该连接
+keepalive_timeout
+
+6.
+client_header_timeout：用于设置读取客户端请求头数据的超时时间
+client_max_body_size 用于设置最大的允许客户端请求主体的大小
+
+7.gzip 压缩
+需要压缩的对象有 html 、js 、css 、xml 、shtml 
+图片和视频尽量不要压缩，因为这些文件大多都是已经压缩过的，如果再压缩可能反而变大。
+另外，压缩的对象必须大于 1KB，由于压缩算法的特殊原因，极小的文件压缩后可能反而变大。
+http {
+    gzip  on;                    # 开启压缩功能
+    gzip_min_length  1k;         # 允许压缩的对象的最小字节
+    gzip_buffers  4 32k;         # 压缩缓冲区大小，表示申请4个单位为32k的内存作为压缩结果的缓存
+    gzip_http_version  1.1;      # 压缩版本，用于设置识别HTTP协议版本
+    gzip_comp_level  9;          # 压缩级别，1级压缩比最小但处理速度最快，9级压缩比最高但处理速度最慢
+    gzip_types  text/plain application/x-javascript text/css application/xml;    # 允许压缩的媒体类型
+    gzip_vary  on;               # 该选项可以让前端的缓存服务器缓存经过gzip压缩的页面，例如用代理服务器缓存经过Nginx压缩的数据
+}
+
+8.配置 expires 缓存期限
+# 不希望被缓存的内容：广告图片、网站流量统计工具、更新很频繁的文件。
+server {
+    listen       80;
+    server_name  www.abc.com abc.com;
+    root    html/www;
+    location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|css)$    # 缓存的对象
+    {
+        expires 3650d;     # 缓存期限为 10 年
+    }
+}
+
+9.防盗链
+#第一种,匹配后缀
+
+location ~ .*\.(gif|jpg|jpeg|png|bm|swf|flv|rar|zip|gz|bz2)$ {    # 指定需要使用防盗链的媒体资源
+    access_log  off;                                              # 不记录日志
+    expires  15d;                                                 # 设置缓存时间
+   valid_referers  none  blocked  *.test.com  *.abc.com;         # 表示仅允许这些域名访问上面的媒体资源
+    if ($invalid_referer) {                                       # 如果域名不是上面指定的地址就返回403
+       return 403
+    }
+}
+
+#第二种,绑定目录
+location /images {  
+    root /web/www/img;
+    vaild_referers none blocked *.spdir.com *.spdir.top;
+    if ($invalid_referer) {
+        return 403;
+    }
+}
+```
+
+
 
 ## 5.四层代理
 
 ## 6.Nginx中使用 Lua+Redis 限制IP的访问频率
+
+
+
+
+
+
+
+## 总结：
+
+```mermaid
+graph LR;
+A["Nginx"]-->B["调优"]
+B-->C["1. 进程优化：worker_processes<br>2. 绑定 Nginx 进程到不同的 CPU 上<br>3. 单个进程允许最大连接数：worker_connections<br>4. 进程打开最大文件数：worker_rlimit_nofile<br>5. 客户端连接保持会话的超时时间: keepalive_timeout<br>6. 客户端请求头数据的超时时间: client_header_timeout<br>7. gzip 压缩<br>8. 配置 expires 缓存期限<br>9. 防盗链"]
+```
 

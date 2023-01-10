@@ -702,7 +702,7 @@ C-->J["字典推导式"]
 H-->K["[i * i for i in range(10)]<br>[i * i for i in range(10) if i%2 == 0]<br>[i if i%2 == 0 else -i for i in range(10)] # if在for之前必须加else"]
 I-->L["a = [1,2,2,4,6,6,8]<br>set1 = {i for i in a} # 集合去重"]
 J-->M["a = {'a': 1, 'b':2, 'c':3}<br>dic1 = {v: k for k,v in a.items()}"]
-D-->N["判断可迭代对象<br>from collections.abc import Iterable<br>isinstance(100, Iterable)<br><br>迭代字典：<br>for i in dict: # 迭代key<br>for i in dict.values(): # 迭代value<br>for i in dict.items(): # 迭代key和value<br>列表<br>迭代索引+元素<br>for i,value in enumerate(a): # enumerate函数"]
+D-->N["判断可迭代对象<br>from collections.abc import Iterable<br>isinstance(100, Iterable)<br><br>迭代字典：<br>for i in dict: # 迭代key<br>for i in dict.values(): # 迭代value<br>for k,v in dict.items(): # 迭代key和value<br>列表<br>迭代索引+元素<br>for i,value in enumerate(a): # enumerate函数"]
 E-->O["可迭代对象转换为迭代器： iter()<br>判断是否是迭代器: from collections.abc import Iterable,Iterator<br><br>迭代器一定是可迭代对象，可迭代对象不一定是迭代器！！！"]
 F-->P["1. 生成器推导式：<br>(i for i in range(10))<br><br>2. 生成器函数：yield关键字<br>遇到 yield 返回，再次执行从上次 yield 返回处继续执行"]
 ```
@@ -1732,9 +1732,40 @@ with open("D:\\ronnie\\111.txt", 'a') as f:
     f.write("\n123\n456")
 ```
 
+## 13.常用第三方模块
+
+获取系统信息模块： psutil
+
+```python
+import psutil
+
+print(psutil.cpu_count())        # 获取cpu逻辑核心数
+print(psutil.cpu_count(logical=False))
+print(psutil.virtual_memory())   # 获取内存使用情况
+
+print(psutil.disk_usage('C:\\'))   # 磁盘使用情况
+print(psutil.disk_partitions())    # 磁盘分区
+```
+
+```python
+#######内存#########
+
+import psutil
+
+mem = psutil.virtual_memory()
+memtotal = mem.total/1024/1024
+memused = mem.used/1024/1024
+membaifen = mem.used/mem.total*100
 
 
-## 13. 脚本
+print("总内存: {0:.2f}MB".format(memtotal))
+print("已使用内存: {0:.2f}MB".format(memused))
+print("内存使用率: {0:.2f}%".format(membaifen))
+```
+
+
+
+## 14. 脚本
 
 ```python
 # 实时获取USDT兑换人民币汇率
@@ -1776,9 +1807,9 @@ df.to_excel("D:\\tables\\111.xlsx",index = False)
 -  将D:\tables目录下的所有.xlsx表全部合并成一个新的表111.xlsx
 ```
 
-## 14.爬虫
+## 15.爬虫
 
-第一个爬虫程序！
+### 1.爬虫脚本
 
 ```python
 import requests
@@ -1862,7 +1893,39 @@ if __name__ == "__main__":
     main()
 ```
 
-### 1.scrapy框架
+### 2.反爬
+
+很多时候通过`requests`请求网页内容的过程中得到不正确的状态码，比如今天我在爬取豆瓣读书评论的过程中，`import requests` 之后，通过`get`获取网页内容，但是返回内容为空。
+
+
+
+```python
+import requests
+url = "https://www.douban.com/"
+html = requests.get(url)
+print(html.status_code)
+
+# 结果返回状态码为418
+```
+
+
+
+添加`headers`，模拟浏览器访问
+
+```python
+import requests
+
+headers={
+        'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+    }
+url = "https://www.douban.com/"
+html = requests.get(url, headers=headers)
+print(html.status_code)
+
+# 此时返回状态为200，搞定！
+```
+
+### 3.scrapy框架
 
 #### 1.安装scrapy框架
 
@@ -1921,7 +1984,7 @@ class QuotesSpider(scrapy.Spider):
         'https://quotes.toscrape.com/tag/humor/',
     ]
 
-    def parse(self, response):
+    def parse(self, response):    # response为爬取网站得到的html页面
         for quote in response.xpath('//div[@class="quote"]'):
         # for quote in response.css('div.quote'):
             yield {
@@ -1995,8 +2058,97 @@ class ItcastSpider(scrapy.Spider):
 `iv.启动爬虫`
 
 ```shell
-> scrapy crawl itcast
+> scrapy crawl itcast   # itcast为爬虫名
 
 # 会生成一个teacher.html的文件，保存了爬取的网页内容源代码
 ```
+
+#### 3.xpath的用法
+
+在 Scrapy 框架中，有两种解析 HTML 源码的函数，分别是 css 和 xpath
+
+xpath用法：
+
+- `/li/a/@herf` 这样取的应该是`href`的内容
+
+- `/li/a/text()` 这样取得是`text`内容
+
+
+
+#### 4.爬取图片网站示例
+
+
+
+```shell
+> scrapy startproject picSpider    # 新建项目
+> cd picSpider
+> scrapy genspider hotgirl "hotnakedgirls.xxx"   # 新建爬虫 
+
+- 修改settings.py
+ROBOTSTXT_OBEY = False    # 君子协定
+```
+
+编写爬虫代码
+
+```python
+import scrapy
+import re
+import os
+import requests
+
+class HotgirlSpider(scrapy.Spider):
+    name = 'hotgirl'
+    allowed_domains = ['hotnakedgirls.xxx']
+    start_urls = ['http://hotnakedgirls.xxx/']
+    num1 = 1
+
+    def parse(self, response):
+        clicks = response.xpath("//div[@class='inneromelo thumb']/a/@href").extract()
+
+        for index,click in enumerate(clicks):
+            print(index+1, click)
+        num = int(input("请输入图片类型:"))
+        click = "http://hotnakedgirls.xxx" + clicks[num-1]  #获取到主链接地址
+
+
+            # scrapy爬取到一个页面得到链接后再爬取该链接的页面
+        yield scrapy.Request(url=click, callback=self.parse_detail, dont_filter=True)
+
+            # dont_filter=True, 这个参数: scrapy.Request不进入回调函数解决办法
+
+    # 再写一个函数
+    def parse_detail(self, response):
+        sub_clicks = response.xpath("//div[@class='inneromelo thumb']/a/@href").extract()
+        for sub_click in sub_clicks:
+            res = re.findall('https:.*', sub_click)   # 获取到子链接地址
+            res = res[0]
+
+            yield scrapy.Request(url=res, callback=self.parse_detail1, dont_filter=True)
+
+    def parse_detail1(self, response):
+
+        img_urls = response.xpath("//div[@class='gallery-holder js-album']/a/@href").extract()
+        os.mkdir("D:\picture\\" + str(self.__class__.num1))
+
+        for index, img_url in enumerate(img_urls):
+            html = requests.get(img_url).content
+            with open("D:\picture\\" + str(self.__class__.num1) + "\\" + str(index+1) + ".jpg", "wb") as f:
+                f.write(html)
+
+        self.__class__.num1 += 1
+```
+
+启动爬虫
+
+```shell
+> scrapy crawl hotgirl    # 启动爬虫，爬虫名为hotgirl
+```
+
+
+
+
+
+
+
+
 

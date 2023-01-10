@@ -243,7 +243,7 @@ $ ./kafka-console-producer.sh \
 $ ./kafka-console-consumer.sh \
 --bootstrap-server 192.168.254.51:9092,192.168.254.52:9092,192.168.254.53:9092 \
 --topic demo01 \
---from-beginning
+--from-beginning   # 从开始消费消息
 ```
 
 ## 5.部署elasticsearch
@@ -635,7 +635,7 @@ $ vim /etc/hosts
 192.168.254.51 elk-master
 192.168.254.52 elk-node1
 192.168.254.53 elk-node2
-# 不配置hosts，会在kafka创建主题，但是无法消费
+# 不配置hosts，会在kafka创建主题，但是无法消费；原因是kafka配置文件绑定了主机名。
 ```
 
 ## 9.es基本操作

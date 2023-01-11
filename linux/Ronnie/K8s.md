@@ -251,7 +251,7 @@ NETWORK ID     NAME      DRIVER    SCOPE
 
 **单机环境下的网络拓扑如下（主机地址是10.10.0.186/24）：**
 
-![image-20230109192801436](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230109192801436.png)
+![image-20230109192801436](D:\Tech\linux\Ronnie\.assets\image-20230109192801436.png)
 
 
 
@@ -293,11 +293,210 @@ $ docker exec test4 ping test5
 
 ### 2.Docker容器跨主机通信
 
-1.直接路由方式
+#### 1.直接路由方式
+
+```shell
+https://cloud.tencent.com/developer/article/1587094
+# 避免不同主机上的容器使用了相同的IP，为此我们应该为不同的主机分配不同的子网来保证.
+
+各项配置如下：
+
+- 主机1的IP地址为：192.168.254.71
+- 主机2的IP地址为：192.168.254.72
+- 为主机1上的Docker容器分配的子网：10.0.128.0/24
+- 为主机2上的Docker容器分配的子网：10.0.129.0/24
+```
+
+修改主机1和主机2的子网：
+
+```shell
+# host1
+$ cat /etc/docker/daemon.json
+{
+  "bip":"10.0.128.1/24"
+}
+
+# host2
+$ cat /etc/docker/daemon.json
+{
+  "bip":"10.0.129.1/24"
+}
+
+$ systemctl restart docker    # 重启容器
+```
+
+添加路由规则：
+
+```shell
+# host1
+$ route add -net 10.0.129.0/24 gw 192.168.254.72
+
+# host2
+$ route add -net 10.0.128.0/24 gw 192.168.254.71
+```
+
+
+
+在主机1上，ping主机2的docker0地址
+
+```shell
+$ ping 10.0.129.1
+PING 10.0.129.1 (10.0.129.1) 56(84) bytes of data.
+64 bytes from 10.0.129.1: icmp_seq=1 ttl=64 time=0.770 ms
+```
+
+在主机2上，ping主机1的docker0地址
+
+```shell
+$ ping 10.0.128.1
+PING 10.0.128.1 (10.0.128.1) 56(84) bytes of data.
+64 bytes from 10.0.128.1: icmp_seq=1 ttl=64 time=0.426 ms
+```
+
+ok，既然docker0都通了，那么起一个docker容器，会不会也是通的的呢？测试一下
+
+```shell
+# host1
+$ docker run -itd --name test1 busybox   # 容器ip为 10.0.128.2
+
+# host2
+$ docker run -itd --name test2 busybox   # 容器ip为 10.0.129.2
+```
+
+
+
+在主机1上的容器中 ping 主机2中的容器
+
+先来ping 主机2的docker0，再ping 主机2中的容器
+
+```shell
+$ docker exec test1 ping 10.0.129.1
+PING 10.0.129.1 (10.0.129.1): 56 data bytes
+64 bytes from 10.0.129.1: seq=0 ttl=64 time=0.095 ms
+
+$ docker exec test1 ping 10.0.129.2     # ping不通
 
 ```
-https://cloud.tencent.com/developer/article/1587094
+
+从结果中，可以发现。docker0是通的，但是主机2中的容器是不通的，为什么呢？
+
+
+
+配置iptables规则
+
+```shell
+# host1
+$ iptables -t nat -I PREROUTING -s 10.0.128.0/24 -d 10.0.129.0/24 -j DNAT --to 10.0.128.1
+
+- 当源地址为10.0.128.0/24网段 访问 10.0.129.0/24 时，在路由之前，将ip转换为10.0.128.1
+# 注意：一定要加-d参数。如果不加，虽然docker之间可以互通，但是不能访问网站，比如百度，qq之类的！
+# 为什么呢？访问10.0.129.0/24 时，通过docker0网卡出去的。但是访问百度，还是通过docker0，就出不去了！
+# 真正连接外网的是eth0网卡，必须通过它才行！因此必须要指定-d参数！
+
+# host2
+$ iptables -t nat -I PREROUTING -s 10.0.129.0/24 -d 10.0.128.0/24 -j DNAT --to 10.0.129.1
 ```
+
+---
+
+
+
+#### 2.overlay
+
+Overlay网络实际上是目前最主流的容器跨节点数据传输和路由方案。
+
+环境：
+
+- node1：192.168.254.60
+
+- node2：192.168.254.203
+
+- node3：192.168.254.71
+
+
+
+`i.安装consul`
+
+```shell
+node1上：
+$ docker run -d -p 8500:8500 -h consul --name consul progrium/consul -server -bootstrap
+
+-p 8500:8500 指定映射端口8500
+-h consul 指定主机名
+--name consul 是容器的名字
+progrium/consul 镜像名
+-server 设置Agent是server模式
+-bootstrap 设置服务为“bootstrap”模式
+```
+
+容器启动后，可以通过 [http://192.168.254.60:8500](http://192.168.254.60:8500/) 访问 Consul
+
+
+
+```shell
+node2、node3上： 
+$ vim /etc/docker/daemon.json
+{
+  "hosts":["tcp://0.0.0.0:2375","unix:///var/run/docker.sock"],
+  "cluster-store": "consul://192.168.xx.xx:8500",
+  "cluster-advertise": "192.168.254.203:2375"      # node3就填自己的ip                  
+}
+
+host 开启和监听2375端口，同时使用docker.sock文件
+--cluster-store指定 consul 的地址。
+--cluster-advertise 告知 consul 自己的连接地址。
+
+# 注意：记得修改docker.service.因为配置和daemon.json冲突
+- 修改 /usr/lib/systemd/system/docker.service
+- 将-H fd://去掉
+
+$ vim /usr/lib/systemd/system/docker.service
+ExecStart=/usr/bin/dockerd  --containerd=/run/containerd/containerd.sock
+```
+
+```shell
+$ systemctl daemon-reload
+$ systemctl restart docker
+```
+
+网页上访问： [http://192.168.xx.xx:8500](http://192.168.1.12:8500/)
+
+在KEY/VALUE -> docker -> nodes 下如果有你创建的两个节点node2（192.168.254.203），node3（192.168.254.71），说明成功。
+
+![image-20230111151405108](D:\Tech\linux\Ronnie\assets\image-20230111151405108.png)
+
+
+
+`ii.创建overlay网络`
+
+```shell
+在 node2 中创建 overlay 网络 ol1：
+
+$ docker network create -d overlay ol1
+
+# 同时查看node3，也会出现ol1网络，这是因为创建 ol1 时 node2 将 overlay 网络信息存入了 consul，node3 从 consul 读取到了新网络的数据。之后 ol1 的任何变化都会同步到 node2 和 node3。
+```
+
+
+
+`iii.启动容器测试`
+
+```shell
+分别在node2和node3启动容器
+$ docker run -itd --name test1 --network ol1 busybox   # node2节点
+$ docker run -itd --name test2 --network ol1 busybox   # node3节点
+
+$ docker exec test1 ping test2    # node2上ping
+PING test2 (10.0.0.3): 56 data bytes
+64 bytes from 10.0.0.3: seq=0 ttl=64 time=0.951 ms
+
+能看到已经ping通了
+
+```
+
+
+
+- **docker 会创建一个 `bridge` 网络` “docker_gwbridge”`，为所有连接到 `overlay` 网络的容器提供访问外网的能力!!**
 
 
 

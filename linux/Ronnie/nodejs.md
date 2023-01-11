@@ -55,7 +55,7 @@ $ source ~/.bash_profile
 ```shell
 # 1、安装node.js
 
-$ nvm install 14.17.5
+$ nvm install v14.17.5
 
 # 2、查看node.js版本
 
@@ -65,5 +65,10 @@ $ node -v
 
 $ nvm ls (查看所有已经安装的node.js版本)
 $ nvm use <版本号> （选择从上面列出的node.js版本号）
+```
+
+```shell
+# 解决nvm切换node版本后，重新打开终端失效
+nvm alias default v16.19.0
 ```
 

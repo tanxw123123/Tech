@@ -151,15 +151,15 @@ a. 安装配置 Publish Over SSH 插件
 
 `i.字符参数(String Parameter)`
 
-![image-20230105102354156](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102354156.png)
+![image-20230105102354156](D:\Tech\linux\Ronnie\.assets\image-20230105102354156.png)
 
 `ii.选项参数(Choice Parameter)`
 
-![image-20230105102524965](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102524965.png)
+![image-20230105102524965](D:\Tech\linux\Ronnie\.assets\image-20230105102524965.png)
 
 `iii.构建`
 
-![image-20230105102654510](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230105102654510.png)
+![image-20230105102654510](D:\Tech\linux\Ronnie\.assets\image-20230105102654510.png)
 
 ---
 
@@ -169,7 +169,7 @@ a. 安装配置 Publish Over SSH 插件
 
 1.删除Jenkins目录下config.xml文件中下面代码并保存
 
-![image-20230104180026396](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104180026396.png)
+![image-20230104180026396](D:\Tech\linux\Ronnie\.assets\image-20230104180026396.png)
 
 2.重启jenkins
 
@@ -179,15 +179,15 @@ $ systemctl restart jenkins
 
 3.进入首页>“系统管理”>“Configure Global Security”；点选“Jenkins专有用户数据库”，并点击“保存”
 
-![image-20230104181311817](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104181311817.png)
+![image-20230104181311817](D:\Tech\linux\Ronnie\.assets\image-20230104181311817.png)
 
 4.重新点击首页>“系统管理”,发现此时出现“管理用户”
 
-![image-20230104181419505](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104181419505.png)
+![image-20230104181419505](D:\Tech\linux\Ronnie\.assets\image-20230104181419505.png)
 
 然后修改密码！！
 
 5.禁止匿名用户登陆
 
-![image-20230104185746519](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20230104185746519.png)
+![image-20230104185746519](D:\Tech\linux\Ronnie\.assets\image-20230104185746519.png)
 

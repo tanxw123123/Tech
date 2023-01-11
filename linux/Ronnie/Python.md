@@ -48,7 +48,7 @@ Create Associations创建关联，勾选.py，以后打开.py文件就会用PyCh
 
 file ->setting->project ->project interpreter：
 
-![image-20221228132954279](C:\Users\ronnie\AppData\Roaming\Typora\typora-user-images\image-20221228132954279.png)
+![image-20221228132954279](D:\Tech\linux\Ronnie\.assets\image-20221228132954279.png)
 
 ## 4.输入和输出
 
@@ -228,6 +228,11 @@ a = "   shang hai    "
 print(a)
 print(a.strip())
 
+删除前面空格： lstrip()
+print(a.lstrip())
+
+删除后面空格： rstrip()
+print(a.rstrip())
 --------------------------------------------------------------
 字符串替换： replace
 a = "hello,world"
@@ -413,7 +418,7 @@ B-->D["字符（str）"]
 B-->R["列表(可变类型)"]
 B-->S["元组(不可变类型)"]
 B-->T["字典: 速度快，占内存"]
-R-->U["append('value') 追加到末尾<br>insert(i, 'value') 插入指定位置<br>pop() 删除末尾<br>pop(i) 删除指定<br>remove('value') 删除指定"]
+R-->U["append('value') 追加到末尾<br>insert(i, 'value') 插入指定位置<br>pop() 删除末尾<br>a.pop(i) / del a[i] 删除指定,按索引<br>a.remove('value') 删除特定对象，删除第一个，再删除就删除第二个，以此类推"]
 S-->V["空元组： a = ()<br> a = (1,)"]
 T-->W["get()方法：dict.get('key')<br>删除key： dict.pop('key')"]
 B-->E["布尔值（bool）"]

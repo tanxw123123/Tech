@@ -14,7 +14,7 @@ https://zhuanlan.zhihu.com/p/27449990
 $ cd ~/
 $ git clone https://github.com/nvm-sh/nvm.git .nvm
 $ cd ~/.nvm
-git checkout v0.38.0
+$ git checkout v0.38.0
 $ . ./nvm.sh
 $ cd ~/
 ```

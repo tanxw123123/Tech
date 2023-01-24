@@ -704,7 +704,7 @@ B-->G["切片对象：字符串、列表、元组<br>[:3] 索引0到2<br>[1:3] �
 C-->H["列表推导式"]
 C-->I["集合推导式"]
 C-->J["字典推导式"]
-H-->K["[i * i for i in range(10)]<br>[i * i for i in range(10) if i%2 == 0]<br>[i if i%2 == 0 else -i for i in range(10)] # if在for之前必须加else"]
+H-->K["[i * i for i in range(10)]<br>[i * i for i in range(10) if i%2 == 0]<br>[i if i%2 == 0 else -i for i in range(10)] # if在for之前必须加else<br>列表去除空字符  [i for i in list if i.strip() != '']"]
 I-->L["a = [1,2,2,4,6,6,8]<br>set1 = {i for i in a} # 集合去重"]
 J-->M["a = {'a': 1, 'b':2, 'c':3}<br>dic1 = {v: k for k,v in a.items()}"]
 D-->N["判断可迭代对象<br>from collections.abc import Iterable<br>isinstance(100, Iterable)<br><br>迭代字典：<br>for i in dict: # 迭代key<br>for i in dict.values(): # 迭代value<br>for k,v in dict.items(): # 迭代key和value<br>列表<br>迭代索引+元素<br>for i,value in enumerate(a): # enumerate函数"]
@@ -1772,9 +1772,9 @@ print("内存使用率: {0:.2f}%".format(membaifen))
 
 ## 14. 脚本
 
-```python
-# 实时获取USDT兑换人民币汇率
+### 1.USDT兑换人民币汇率
 
+```python
 import requests
 import re
 
@@ -1799,6 +1799,10 @@ if __name__ == "__main__":
     sendtelegram(messages)
 ```
 
+
+
+### 2.合并excel表
+
 ```python
 # 合并excel表
 
@@ -1811,6 +1815,156 @@ df.to_excel("D:\\tables\\111.xlsx",index = False)
 
 -  将D:\tables目录下的所有.xlsx表全部合并成一个新的表111.xlsx
 ```
+
+
+
+### 3.写一个python调用接口
+
+
+
+**`i.GET请求`**
+
+```python
+# GET请求
+
+from flask import Flask,request
+import json
+
+app = Flask(__name__)
+
+@app.route("/test100", methods=["GET"])
+
+def check():
+    return_dict = {'return_code': '200', 'return_info': '处理成功', 'result': False}
+
+    if not request.args:
+        return_dict['return_code'] = '5004'
+        return_dict['return_info'] = '请求参数为空'
+        return json.dumps(return_dict, ensure_ascii=False)     # 序列化为字符串
+
+    get_data = request.args
+    name = get_data.get('name')
+    age = get_data.get('age')
+
+    return_dict['result'] = tt(name,age)
+
+
+    return json.dumps(return_dict, ensure_ascii=False)
+
+def tt(name, age):
+    result_str = "%s今年%s岁" % (name, age)
+    return result_str
+
+if __name__ == "__main__":
+    app.run(debug=False, host='0.0.0.0', port=5000)
+    
+    
+> python xxx.py run     # 运行python程序
+```
+
+
+
+**postman请求测试**
+
+参数为空时执行结果：
+
+![image-20230112233338858](D:\Tech\linux\Ronnie\assets\image-20230112233338858.png)
+
+加参数执行结果：
+
+![image-20230112233547830](D:\Tech\linux\Ronnie\assets\image-20230112233547830.png)
+
+
+
+**`ii.POST请求`**
+
+```python
+# POST请求
+
+from flask import Flask, request
+import json
+
+app = Flask(__name__)
+
+@app.route("/test100", methods=["POST"])
+
+def check():
+    return_dict = {'return_code': '200', 'return_info': '处理成功', 'result': False}
+
+    if not request.get_data():
+        return_dict['return_code'] = '5004'
+        return_dict['return_info'] = '请求参数为空'
+        return json.dumps(return_dict, ensure_ascii=False)
+
+    get_data = request.get_data()
+    get_data = json.loads(get_data)
+    name = get_data.get('name')
+    age = get_data.get('age')
+
+    return_dict['result'] = tt(name,age)
+
+
+    return json.dumps(return_dict, ensure_ascii=False)
+
+def tt(name, age):
+    result_str = "%s今年%s岁" % (name, age)
+    return result_str
+
+if __name__ == "__main__":
+    app.run(debug=False, host='0.0.0.0', port=5000)
+```
+
+
+
+**postman请求测试：**
+
+![image-20230113233328792](D:\Tech\linux\Ronnie\assets\image-20230113233328792.png)
+
+
+
+**实战post请求**
+
+```python
+from flask import Flask, request
+import json
+import requests
+
+app = Flask(__name__)
+
+@app.route("/test100", methods=["POST"])
+
+def check():
+    message = request.get_data()
+    message = message.decode("utf-8")    # bytes转为utf-8
+
+    message = json.loads(message)        # 反序列化为字典
+    domain = message.get("域名")
+    status = message.get("状态")
+
+    message = """============
+    域名: {}
+    状态: {}
+    """.format(domain, status)
+
+    sendtelegram(message)
+
+def sendtelegram(message):
+    url = "https://api.telegram.org/bot5429948026:AAFtWaW1ZcU4IUNaNNtIFfK9qHIYoMjAlgg/sendMessage?chat_id=-613903645&text=" + str(message)
+    requests.get(url)
+
+if __name__ == "__main__":
+    app.run(debug=False, host='0.0.0.0', port=5000)
+```
+
+请求
+
+![image-20230113235416908](D:\Tech\linux\Ronnie\assets\image-20230113235416908.png)
+
+telegram告警信息：
+
+![image-20230113235500857](D:\Tech\linux\Ronnie\assets\image-20230113235500857.png)
+
+
 
 ## 15.爬虫
 
@@ -2080,6 +2234,26 @@ xpath用法：
 
 
 
+**构造选择器：**
+
+```shell
+终端：
+> scrapy shell https://movie.douban.com/chart
+
+载入后你将获得一个response的shell变量
+
+>>> response.xpath()
+>>> response.css()
+
+# 为了提取真实的原文数据，你需要调用 .extract()方法
+>>> response.xpath('//title/text()').extract()
+
+# 如果想要提取到第一个匹配到的元素, 必须调用 .extract_first()
+>>> response.xpath('//div[@id="images"]/a/text()').extract_first()
+```
+
+
+
 #### 4.爬取图片网站示例
 
 
@@ -2151,7 +2325,51 @@ class HotgirlSpider(scrapy.Spider):
 
 
 
+#### 5.爬取豆瓣（需要添加hearders）
 
+```shell
+> scrapy startproject project1    # 创建项目
+> cd project1                      
+> scrapy genspider douban "douban.com"   # 创建爬虫
+
+settings.py 修改君子协定
+```
+
+
+
+添加headers
+
+```python
+打开settings.py，对整个爬虫生效
+
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+```
+
+
+
+编写代码： douban.py
+
+```python
+import scrapy
+import re
+
+
+class DoubanSpider(scrapy.Spider):
+    name = 'douban'
+    allowed_domains = ['douban.com']
+    start_urls = ['https://movie.douban.com/chart']
+
+    # custom_settings = {
+    #     "User_Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    # }
+
+    def parse(self, response):
+        clicks = response.xpath("//div[@class='indent']/div/table/tr/td/div/a/text()").extract()
+        clicks = [i for i in clicks if i.strip() != ""]      # 去除列表空字符
+        for movie_name in clicks:
+            movie_name = re.search("\S+", movie_name)
+            print(movie_name.group())
+```
 
 
 

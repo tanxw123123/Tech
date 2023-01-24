@@ -49,6 +49,14 @@ ubuntu  ALL=(ALL:ALL) NOPASSWD:ALL
 # 需要修改时间为24小时，可以修改/etc/default/locale，默认没有LC_TIME这个变量，在文件中增加一行
 $ vim /etc/default/locale
 LC_TIME=en_DK.UTF-8
+------------------------------------------------------
+# 禁用ipv6
+$ vim /etc/sysctl.conf
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+net.ipv6.conf.lo.disable_ipv6=1
+
+$ sysctl -p
 ```
 
 ```shell
@@ -105,6 +113,8 @@ LC_TIME=en_DK.UTF-8
   shell: |
     apt update ; apt upgrade -y ; apt autoremove -y
 ```
+
+
 
 centos
 

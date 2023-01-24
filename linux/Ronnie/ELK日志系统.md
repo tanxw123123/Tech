@@ -393,7 +393,7 @@ $ grunt server
 
 ## 6.安装logstash
 
-安装：
+首先，安装java环境
 
 ```shell
 $ wget https://artifacts.elastic.co/downloads/logstash/logstash-7.10.1-x86_64.rpm

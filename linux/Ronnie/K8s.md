@@ -1,6 +1,78 @@
-## 1.k8s组件
+## 1.快速安装docker
 
-`i. master节点组件：`
+```shell
+# centos && ubuntu
+$ curl -sSL https://get.daocloud.io/docker | sh
+```
+
+## 2.k8s集群搭建
+
+### 1.kuboard spray
+
+**！！！** 重要： kuboard-spray 所在机器不能当做 K8S 集群的一个节点，因为安装过程中会重启集群节点的容器引擎，这会导致 kuboard-spray 被重启掉。
+
+
+
+**`安装kuboard spray`**
+
+```shell
+$ docker run -d \
+  --privileged \
+  --restart=unless-stopped \
+  --name=kuboard-spray \
+  -p 80:80/tcp \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/kuboard-spray-data:/data \
+  eipwork/kuboard-spray:latest-amd64
+  
+# 在浏览器打开地址 http://这台机器的IP，用户名：admin  输入默认密码 Kuboard123，即可登录 Kuboard-Spray 界面
+```
+
+
+
+**`导入资源包`**
+
+![image-20230124161331546](D:\Tech\linux\Ronnie\assets\image-20230124161331546.png)
+
+
+
+**`添加集群安装计划`**
+
+![image-20230124163117853](D:\Tech\linux\Ronnie\assets\image-20230124163117853.png)
+
+全局配置：用户名，密码，端口
+
+容器引擎选择： docker_20.10
+
+Kubenetes在1.24 版本里弃用docker
+
+![image-20230124163638504](D:\Tech\linux\Ronnie\assets\image-20230124163638504.png)
+
+配置节点：
+
+`control-plane`节点过去叫`master`节点，由于"某些原因"，现在开源社区很多项目都开始避免使用`master`这个词.
+
+![image-20230124165138624](D:\Tech\linux\Ronnie\assets\image-20230124165138624.png)
+
+
+
+**`安装`**
+
+![image-20230124165433668](D:\Tech\linux\Ronnie\assets\image-20230124165433668.png)
+
+
+
+### 2.二进制安装
+
+```shell
+
+```
+
+
+
+## 3.k8s组件
+
+**`i. master节点组件：`**
 
 - *API Server*：提供Kubernetes API接口，主要处理 Rest操作以及更新Etcd中的对象。是所有资源增删改查的唯一入口。
 - *Scheduler*：资源调度，绑定Pod到Node上；
@@ -14,16 +86,16 @@
 
 
 
-`ii. node节点组件：`
+**`ii. node节点组件：`**
 
 - *kubelet*：负责pod的生命周期管理，维护和管理该Node上面的所有容器；
 - *kube-proxy*：是实现service的通信与负载均衡机制的重要组件，将到service的请求转发到后端的pod上；
 - *docker*：是负责容器的创建和管理工作；
 - *pod*：k8s的最小工作单元，一个pod包含一个或多个容器。pod作为整体被master调度到某个node上运行，pod中所有容器使用相同的ip和端口。
 
+## 4.pod
 
-
-##  2.pod健康检查
+###  1.pod健康检查
 
 `1.livenessProbe探针（存活检查）`
 
@@ -50,7 +122,7 @@
 
 
 
-## 3.pod调度方式
+### 2.pod调度方式
 
 ```
 https://cloud.tencent.com/developer/article/1644857
@@ -124,102 +196,11 @@ $ kubectl taint node k8s-node02 type:NoSchedule-
 
 ```
 
-
-
-## 4.k8s资源限制
-
-```yaml
-https://juejin.cn/post/6974203884369608734
-requests：相对限制，是容器的最低申请资源，这个限制是相对的，无法做到绝对严格。
-limits：绝对限制，这个是限制的绝对的，不可能超越。
-
-
-resources:
-      limits:
-        cpu: "2"
-        memory: 1000Mi
-      requests:
-        cpu: "1"
-        memory: 500Mi
-        
-```
-
-
-
-## 5.k8s node节点停机维护，pod如何迁移？
-
-```shell
-# 1. 默认迁移
-当node节点关机后，k8s集群并没有立刻发生任何自动迁移动作，如果该node节点上的副本数为1，则会出现服务中断的情况。其实事实并非如此，k8s在等待5分钟后，会自动将停机node节点上的pod自动迁移到其他node节点上。
-
-模拟node节点停机，停止kubelet
-$ systemctl stop kubelet
-
-$ kubectl get node
-... NotReady
-
-监控pod状态，大约5分钟
-$ kubectl get pod -n test -o wide -n test -w
-
-5分钟后，pod终止并重建
-从以上过程看出，停机node节点上的pod在5分钟后先终止再重建，直到pod在新节点启动并由readiness探针检测正常后并处于1\1 Running状态才可以正式对外提供服务。因此服务中断时间=停机等待5分钟时间+重建时间+服务启动时间+readiness探针检测正常时间
-
-kubelet停止后，node节点自动添加了污点（Taints）
-$ kubectl describe node k8s-3-218
-
-可以看到，此时pod的Tolerations 默认对于具有相应Taint的node节点容忍时间为300s
-
-# 2. 手动迁移
-为避免等待默认的5分钟，我们还可以使用cordon、drain、uncordor三个命令实现节点的主动维护。此时需要用到以下三个命令：
-
-cordon：标记节点不可调度，后续新的pod不会被调度到此节点，但是该节点上的pod可以正常对外服务；
-drain：驱逐节点上的pod至其他可调度节点；
-uncordon：标记节点可调度；
-
-a. 标记节点不可调度：
-$ kubectl cordon k8s-3-219
-$ kubectl get node
-
-b. 驱逐pod
-$ kubectl drain k8s-3-219 --delete-local-data --ignore-daemonsets --force
-
-此时与默认迁移不同的是，pod会先重建再终止，此时的服务中断时间=重建时间+服务启动时间+readiness探针检测正常时间，必须等到1/1 Running服务才会正常
-
-# 3. 如何能够做到平滑迁移呢
-论是默认迁移和手动迁移，都会导致服务中断，而pdb能可以实现节点维护期间不低于一定数量的pod正常运行，从而保证服务的可用性
-要做到平滑迁移就需要用的pdb(PodDisruptionBudget)，即主动驱逐保护
-
-从218驱逐到219
-1. 标记节点不可调度
-2. 新建pdb
-
-此时由于只有一个副本，最小可用为1，则allow就为0，因此在一个副本通过pdb是不会发生驱逐的，我们需要先扩容，将副本数调整为大于1.
-调整副本数replicas为2
-$ kubectl edit deploy helloworld -n test
-再次查看pdb
-$ kubectl get pdb
-ALLOWED为1
-
-3. 驱逐
-4. 维护完毕，将node调整为可调度
-$ kubectl uncordon k8s-3-218
-
-
-```
-
-
-
-## 6.k8s监控方案
-
-https://cloud.tencent.com/developer/article/2047144
-
-
-
-## 7.pod间通信
+### 3.pod间通信
 
 https://www.51cto.com/article/702401.html  网络模型
 
-### 1.Docker容器间通信
+#### 3.1.Docker容器间通信
 
 我们安装Docker时，它会自动创建三个网络，bridge（创建容器默认连接到此网络）、 none 、host；[网址](https://cloud.tencent.com/developer/article/1674259)
 
@@ -291,9 +272,9 @@ $ docker exec test4 ping test5
 
 
 
-### 2.Docker容器跨主机通信
+#### 3.2.Docker容器跨主机通信
 
-#### 1.直接路由方式
+##### 1.直接路由方式
 
 ```shell
 https://cloud.tencent.com/developer/article/1587094
@@ -401,7 +382,7 @@ $ iptables -t nat -I PREROUTING -s 10.0.129.0/24 -d 10.0.128.0/24 -j DNAT --to 1
 
 
 
-#### 2.overlay
+##### 2.overlay
 
 Overlay网络实际上是目前最主流的容器跨节点数据传输和路由方案。
 
@@ -498,17 +479,7 @@ PING test2 (10.0.0.3): 56 data bytes
 
 - **docker 会创建一个 `bridge` 网络` “docker_gwbridge”`，为所有连接到 `overlay` 网络的容器提供访问外网的能力!!**
 
-
-
-## 7.镜像下载策略
-
-主要分为三种：
-
-- Always：总是从指定的仓库中获取镜像。
-- Never：使用本地镜像，不从仓库中下载。
-- IfNotPresent：当本地镜像不存在时，才从仓库拉取。
-
-## 8.pod状态
+### 4.pod状态
 
 Pending：pod 正在等待 kube-scheduler 选择合适的节点创建。
 
@@ -520,13 +491,184 @@ Failed：pod 的容器非正常退出。
 
 Unknown：无法获取 pod 状态，可能节点间通信出现问题。
 
-## 9.创建pod流程
+### 5.创建pod流程
 
-1） 客户端提交 Pod 的配置信息（可以是 yaml 文件定义好的信息）到 kube-apiserver；
- 2） Apiserver 收到指令后，通知给 controller-manager 创建一个资源对象；
- 3） Controller-manager 通过 api-server 将 pod 的配置信息存储到 ETCD 数据中心中；
- 4） Kube-scheduler 检测到 pod 信息会开始调度预选，会先过滤掉不符合 Pod 资源配置要求的节点，然后开始调度调优，主要是挑选出更适合运行 pod 的节点，然后将 pod 的资源配置单发送到 node 节点上的 kubelet 组件上。
- 5） Kubelet 根据 scheduler 发来的资源配置单运行 pod，运行成功后，将 pod 的运行信息返回给 scheduler，scheduler 将返回的 pod 运行状况的信息存储到 etcd 数据中心。
+1.客户端提交 Pod 的配置信息（可以是 yaml 文件定义好的信息）到 kube-apiserver；
+2.Apiserver 收到指令后，通知给 controller-manager 创建一个资源对象；
+3.Controller-manager 通过 api-server 将 pod 的配置信息存储到 ETCD 数据中心中；
+
+4.scheduler 查看 k8s api ，类似于通知机制。首先判断：pod.spec.Node == null? 若为null，表示这个Pod请求是新来的，需要创建；因此先进行调度计算，找到最`闲`的node。然后将信息在etcd数据库中更新分配结果。
+5.随后目标节点的 kubelet 进程通过 api-server 提供的接口监测到 kube-scheduler 产生的 pod 绑定事件，然后从 etcd 获取 pod 清单，下载镜像并启动容器
+
+
+
+### 6.pod管理
+
+创建pod的方式：
+
+```shell
+1. 命令行
+$ kubectl run nginx --image=nginx    # 创建pod
+$ kubectl delete pod nginx           # 删除pod
+
+# kubectl run --help  查看帮助
+```
+
+```yaml
+2. yaml方式
+$ kubectl run nginx --image=nginx --image-pull-policy=IfNotPresent --dry-run=server -o yaml
+
+# --dry-run 模拟运行，并不会真的创建一个pod ， --dry-run=client输出信息少 ，--dry-run=server输出信息多， -o yaml以yaml文件的格式输出
+
+$ kubectl create deployment nginx --image=nginx --dry-run=client -o yaml      # 生成一个deployment的yaml文件
+
+apiVersion: apps/v1     # <---  apiVersion 是当前配置格式的版本
+kind: Deployment     #<--- kind 是要创建的资源类型，这里是 Deployment
+metadata:        #<--- metadata 是该资源的元数据，name 是必需的元数据项
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:        #<---    spec 部分是该 Deployment 的规格说明
+  replicas: 1        #<---  replicas 指明副本数量，默认为 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:        #<---   template 定义 Pod 的模板，这是配置文件的重要部分
+    metadata:        #<---     metadata 定义 Pod 的元数据，至少要定义一个 label。label 的 key 和 value 可以任意指定
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:           #<---  spec 描述 Pod 的规格，此部分定义 Pod 中每一个容器的属性，name 和 image 是必需的
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+
+# 基于上面的deployment服务生成service的yaml配置
+$ kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=client -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+status:
+  loadBalancer: {}
+```
+
+
+
+## 4.k8s资源限制
+
+```yaml
+https://juejin.cn/post/6974203884369608734
+requests：相对限制，是容器的最低申请资源，这个限制是相对的，无法做到绝对严格。
+limits：绝对限制，这个是限制的绝对的，不可能超越。
+
+
+resources:
+      limits:
+        cpu: "2"
+        memory: 1000Mi
+      requests:
+        cpu: "1"
+        memory: 500Mi
+        
+```
+
+
+
+## 5.k8s node节点停机维护，pod如何迁移？
+
+```shell
+# 1. 默认迁移
+当node节点关机后，k8s集群并没有立刻发生任何自动迁移动作，如果该node节点上的副本数为1，则会出现服务中断的情况。其实事实并非如此，k8s在等待5分钟后，会自动将停机node节点上的pod自动迁移到其他node节点上。
+
+模拟node节点停机，停止kubelet
+$ systemctl stop kubelet
+
+$ kubectl get node
+... NotReady
+
+监控pod状态，大约5分钟
+$ kubectl get pod -n test -o wide -n test -w
+
+5分钟后，pod终止并重建
+从以上过程看出，停机node节点上的pod在5分钟后先终止再重建，直到pod在新节点启动并由readiness探针检测正常后并处于1\1 Running状态才可以正式对外提供服务。因此服务中断时间=停机等待5分钟时间+重建时间+服务启动时间+readiness探针检测正常时间
+
+kubelet停止后，node节点自动添加了污点（Taints）
+$ kubectl describe node k8s-3-218
+
+可以看到，此时pod的Tolerations 默认对于具有相应Taint的node节点容忍时间为300s
+
+# 2. 手动迁移
+为避免等待默认的5分钟，我们还可以使用cordon、drain、uncordor三个命令实现节点的主动维护。此时需要用到以下三个命令：
+
+cordon：标记节点不可调度，后续新的pod不会被调度到此节点，但是该节点上的pod可以正常对外服务；
+drain：驱逐节点上的pod至其他可调度节点；
+uncordon：标记节点可调度；
+
+a. 标记节点不可调度：
+$ kubectl cordon k8s-3-219
+$ kubectl get node
+
+b. 驱逐pod
+$ kubectl drain k8s-3-219 --delete-local-data --ignore-daemonsets --force
+
+此时与默认迁移不同的是，pod会先重建再终止，此时的服务中断时间=重建时间+服务启动时间+readiness探针检测正常时间，必须等到1/1 Running服务才会正常
+
+# 3. 如何能够做到平滑迁移呢
+论是默认迁移和手动迁移，都会导致服务中断，而pdb能可以实现节点维护期间不低于一定数量的pod正常运行，从而保证服务的可用性
+要做到平滑迁移就需要用的pdb(PodDisruptionBudget)，即主动驱逐保护
+
+从218驱逐到219
+1. 标记节点不可调度
+2. 新建pdb
+
+此时由于只有一个副本，最小可用为1，则allow就为0，因此在一个副本通过pdb是不会发生驱逐的，我们需要先扩容，将副本数调整为大于1.
+调整副本数replicas为2
+$ kubectl edit deploy helloworld -n test
+再次查看pdb
+$ kubectl get pdb
+ALLOWED为1
+
+3. 驱逐
+4. 维护完毕，将node调整为可调度
+$ kubectl uncordon k8s-3-218
+
+
+```
+
+
+
+## 6.k8s监控方案
+
+https://cloud.tencent.com/developer/article/2047144
+
+
+
+## 7.镜像下载策略
+
+主要分为三种：
+
+- Always：总是从指定的仓库中获取镜像。
+- Never：使用本地镜像，不从仓库中下载。
+- IfNotPresent：当本地镜像不存在时，才从仓库拉取。
+
+
+
+
 
 ## 10.持久化
 
@@ -535,4 +677,6 @@ Unknown：无法获取 pod 状态，可能节点间通信出现问题。
 2）Hostpath：将宿主机上已存在的目录或文件挂载到容器内部。类似于 docker 中的 bind mount 挂载方式。
 
 3）PersistentVolume（简称 PV）： 基于 NFS 服务的 PV，也可以基于 GFS 的 PV。它的作用是统一数据持久化目录，方便管理。
+
+
 

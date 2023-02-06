@@ -1,10 +1,10 @@
-```
+```shell
 rsync实现细节：
 - 源文件、目标文件。以哪边文件为同步基准
 - --delete  删除源主机没有，目标主机有的文件，以源主机为基准
 - 遇到软链接时是拷贝软链接本身还是拷贝软链接所指向的文件
 ```
-```
+```shell
 rsync的三种工作方式：
 1. 本地文件系统上同步
 格式：
@@ -28,10 +28,10 @@ Access via rsync daemon:
 . user@host:path或user@host::path
 . 如果主机和path路径之间使用单个冒号隔开，表示使用的是远程shell通信方式，而使用双冒号隔开的则表示的是连接rsync daemon
 ```
-```
+```shell
 源路径如果是一个目录的话，带上尾随斜线和不带尾随斜线是不一样的，不带尾随斜线表示的是整个目录包括目录本身，带上尾随斜线表示的是目录中的文件，不包括目录本身，如：
-# rsync -av /etc /tmp
-# rsync -av /etc/ /tmp
+$ rsync -av /etc /tmp
+$ rsync -av /etc/ /tmp
 第一个命令会在/tmp目录下创建etc目录，而第二个命令不会在/tmp目录下创建etc目录，源路径/etc/中的所有文件都直接放在/tmp目录下。
 ```
 ```
@@ -41,7 +41,7 @@ Access via rsync daemon:
 -p --perms：保持perms属性(权限，不包括特殊权限)。
 -z        ：传输时进行压缩提高效率。
 ```
-```
+```shell
 rsync daemon模式介绍：
   既然rsync通过远程shell就能实现两端主机上的文件同步，还要使用rsync的服务干啥？试想下，你有的机器上有一堆文件需要时不时地同步到众多
 机器上去，比如目录a、b、c是专门传输到web服务器上的，d/e、f、g/h是专门传输到ftp服务器上的，还要对这些目录中的某些文件进行排除，如果
@@ -51,7 +51,7 @@ rsync daemon模式介绍：
 实例：
 服务端配置
 1. 修改配置文件
-# vim /etc/rsyncd.conf
+$ vim /etc/rsyncd.conf
 uid = root
 gid = root
 use chroot = no
@@ -72,25 +72,25 @@ lock file = /var/run/rsync.lock
 log file = /var/log/rsyncd.log
 
 2. 创建保存auth user用户列表的用户名密码文件 /etc/rsyncd.secrets
-# cat /etc/rsyncd.secrets
+$ cat /etc/rsyncd.secrets
 admin:123456
 
-# chmod 600 /etc/rsyncd.secrets
+$ chmod 600 /etc/rsyncd.secrets
 
 3. 启动rsync daemon
 ubuntu系统
-# rsync --daemon
+$ rsync --daemon
 
 centos系统
-# systemctl start rsyncd
+$ systemctl start rsyncd
 
 ---------------------------------------------------
 客户端配置
-# cat /etc/rsync.pass
+$ cat /etc/rsync.pass
 123456
 
-# chmod 600 /etc/rsync.pass
+$ chmod 600 /etc/rsync.pass
 
 测试：
-# rsync -avrp --delete --port=51800 source1/ rsync@192.168.254.12::data --password-file=/etc/rsync.pass
+$ rsync -avrp --delete --port=51800 source1/ rsync@192.168.254.12::data --password-file=/etc/rsync.pass
 ```

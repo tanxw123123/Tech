@@ -42,6 +42,21 @@ $ sudo systemctl enable grafana-server
 
 打开浏览器，输入http://ip:3000(端口为3000)，打开Grafana控制面板， 初始默认账号和密码均为 admin，初次登录需要修改密码。
 
+
+
+docker安装：
+
+```shell
+$ docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:8.2.0
+$ mkdir /data/grafana/data
+
+$ docker cp grafana:/var/lib/grafana /data/grafana/data
+$ docker cp grafana:/etc/grafana/grafana.ini /data/grafana/grafana.ini
+$ chmod -R 777 /data/grafana
+
+$ docker run -d -p 3000:3000 -v /data/grafana/data:/var/lib/grafana -v /data/grafana/grafana.ini:/etc/grafana/grafana.ini --name grafana grafana/grafana-enterprise:8.2.0
+```
+
 ---
 
 

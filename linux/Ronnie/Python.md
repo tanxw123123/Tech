@@ -1804,7 +1804,7 @@ if __name__ == "__main__":
 ### 2.合并excel表
 
 ```python
-# 合并excel表
+# 合并excel表，xlsx表格
 
 import pandas as pd
 from pathlib import Path
@@ -1814,6 +1814,38 @@ df = pd.concat(dfs)
 df.to_excel("D:\\tables\\111.xlsx",index = False)
 
 -  将D:\tables目录下的所有.xlsx表全部合并成一个新的表111.xlsx
+```
+
+```shell
+# 解压并合并表格，csv表格
+import os
+import zipfile
+import glob
+import pandas as pd
+
+#### 解压 D:\tables 下面所有的zip文件 ####
+path = "D:\\tables\\"
+L = []
+
+for root,dirs,files in os.walk(path):
+    for file in files:
+        L.append(file)
+
+for i in L:
+    f = zipfile.ZipFile(path+i, "r")
+    for file in f.namelist():
+        f.extract(file, "D:\\tables")
+    f.close()
+
+#### 将目录下的 csv 表格合并为一张表格 #####
+os.chdir(path)
+extension = 'csv'
+all_filenames = [i for i in glob.glob('*.{}'.format(extension))]
+
+#在列表中合并所有文件
+combined_csv = pd.concat([pd.read_csv(f) for f in all_filenames ])
+#导出 csv
+combined_csv.to_csv( "combined_csv.csv", index=False, encoding='utf-8-sig')
 ```
 
 

@@ -108,17 +108,127 @@ Kubenetes在1.24 版本里弃用docker
 - onFailure: 当容器异常退出（退出状态码非0）时，才重启容器
 - Never：当容器终止退出，从不重启容器
 
+```yaml
+例子1： 定义存活命令
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: liveness-exec
+spec:
+  containers:
+  - name: liveness
+    image: registry.k8s.io/busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -f /tmp/healthy; sleep 600
+    livenessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      
+$ kubectl describe pod xxxxx
+
+```
+
 `2.ReadinessProbe探针（就绪检查）`
 
 根据用户自定义规则来判断pod是否健康，如果探测失败，控制器会将此pod从对应service的endpoint列表中移除，从此不再将任何请求调度到此Pod上，直到下次探测成功。
 
+```yaml
+# 这个探针执行ls /ready命令，如果这个文件存在，则返回0，说明Pod就绪了，否则返回其他状态码
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx:alpine
+        name: container-0
+        resources:
+          limits:
+            cpu: 100m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        readinessProbe:      # Readiness Probe
+          exec:              # 定义 ls /ready 命令
+            command:
+            - ls
+            - /ready
+      imagePullSecrets:
+      - name: default-secret
 
+$ kubectl apply -f xxx.yaml
+
+# 这里由于nginx镜像不包含/ready这个文件，所以在创建完成后容器不在Ready状态，如下所示，注意READY这一列的值为0/1，表示容器没有Ready。
+$ kubectl get pod
+NAME                     READY     STATUS    RESTARTS   AGE
+nginx-7955fd7786-686hp   0/1       Running   0          7s
+nginx-7955fd7786-9tgwq   0/1       Running   0          7s
+nginx-7955fd7786-bqsbj   0/1       Running   0          7s
+
+# 创建Service:
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx        
+spec:
+  selector:          
+    app: nginx
+  ports:
+  - name: service0
+    targetPort: 80   
+    port: 8080       
+    protocol: TCP    
+  type: ClusterIP
+  
+###
+$ kubectl describe svc nginx
+Name:              nginx
+......
+Endpoints:         
+......
+
+###
+如果此时给容器中创建一个/ready的文件，让Readiness Probe成功，则容器会处于Ready状态。再查看Pod和Endpoints，发现创建了/ready文件的容器已经Ready，Endpoints也已经添加
+$ kubectl exec nginx-7955fd7786-686hp -- touch /ready
+
+$ kubectl get po -o wide
+NAME                     READY     STATUS    RESTARTS   AGE       IP
+nginx-7955fd7786-686hp   1/1       Running   0          10m       192.168.93.169 
+nginx-7955fd7786-9tgwq   0/1       Running   0          10m       192.168.166.130
+nginx-7955fd7786-bqsbj   0/1       Running   0          10m       192.168.252.160
+
+$ kubectl get endpoints
+NAME       ENDPOINTS           AGE
+nginx      192.168.93.169:80   14d
+
+```
 
 **上面两种探针都支持3种探测方法：**
 
 - Exec： 通过执行命令的方式来检查服务是否正常
 - Httpget： 通过发送http/htps请求检查服务是否正常，返回的状态码为200-399则表示容器健康
 - tcpSocket： 通过容器的IP和Port执行TCP检查，如果能够建立TCP连接，则表明容器健康，这种方式与HTTPget的探测机制有些类似，tcpsocket健康检查适用于TCP业务。
+
+
 
 
 
@@ -200,7 +310,7 @@ $ kubectl taint node k8s-node02 type:NoSchedule-
 
 https://www.51cto.com/article/702401.html  网络模型
 
-#### 3.1.Docker容器间通信
+#### A.Docker容器间通信
 
 我们安装Docker时，它会自动创建三个网络，bridge（创建容器默认连接到此网络）、 none 、host；[网址](https://cloud.tencent.com/developer/article/1674259)
 
@@ -272,7 +382,7 @@ $ docker exec test4 ping test5
 
 
 
-#### 3.2.Docker容器跨主机通信
+#### B.Docker容器跨主机通信
 
 ##### 1.直接路由方式
 
@@ -479,6 +589,32 @@ PING test2 (10.0.0.3): 56 data bytes
 
 - **docker 会创建一个 `bridge` 网络` “docker_gwbridge”`，为所有连接到 `overlay` 网络的容器提供访问外网的能力!!**
 
+
+
+##### 3.容器网络插件
+
+```shell
+# 安装flannel网络插件(简单易用)
+
+# 下载flannel插件的yml
+$ wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+# 修改kube-flannel.yml中的镜像仓库地址为国内源
+$ sed -i 's/quay.io/quay-mirror.qiniu.com/g' kube-flannel.yml
+
+# 安装网络插件
+$ kubectl apply -f kube-flannel.yml
+```
+
+
+
+```shell
+# 下载calico插件的yaml
+$ wget https://docs.projectcalico.org/manifests/calico.yaml
+```
+
+
+
 ### 4.pod状态
 
 Pending：pod 正在等待 kube-scheduler 选择合适的节点创建。
@@ -490,6 +626,20 @@ Succeeded：所有容器已成功启动运行。
 Failed：pod 的容器非正常退出。
 
 Unknown：无法获取 pod 状态，可能节点间通信出现问题。
+
+```shell
+# 解决Terminating状态的Pod删不掉的问题
+$ kubectl delete pod <pod> --grace-period=0 --force
+
+--------------------------------------------
+# k8s pod一直处于ContainerCreating状态
+$ kubectl describe pod nginx-79f79f868d-876f4     #查看报错
+
+$ kubectl get pod -o wide   # 查看对应pod所在节点
+我这里直接重启节点恢复
+```
+
+
 
 ### 5.创建pod流程
 
@@ -506,22 +656,25 @@ Unknown：无法获取 pod 状态，可能节点间通信出现问题。
 
 创建pod的方式：
 
-```shell
 1. 命令行
+
+```shell
+
 $ kubectl run nginx --image=nginx    # 创建pod
 $ kubectl delete pod nginx           # 删除pod
 
 # kubectl run --help  查看帮助
 ```
 
-```yaml
 2. yaml方式
+
+```yaml
+
 $ kubectl run nginx --image=nginx --image-pull-policy=IfNotPresent --dry-run=server -o yaml
 
 # --dry-run 模拟运行，并不会真的创建一个pod ， --dry-run=client输出信息少 ，--dry-run=server输出信息多， -o yaml以yaml文件的格式输出
 
 $ kubectl create deployment nginx --image=nginx --dry-run=client -o yaml      # 生成一个deployment的yaml文件
-
 apiVersion: apps/v1     # <---  apiVersion 是当前配置格式的版本
 kind: Deployment     #<--- kind 是要创建的资源类型，这里是 Deployment
 metadata:        #<--- metadata 是该资源的元数据，name 是必需的元数据项
@@ -546,9 +699,16 @@ spec:        #<---    spec 部分是该 Deployment 的规格说明
         name: nginx
         resources: {}
 status: {}
+```
 
+
+
+3.基于上面的deployment服务生成service的yaml配置
+
+```shell
 # 基于上面的deployment服务生成service的yaml配置
 $ kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=client -o yaml
+$ kubectl expose deployment nginx --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -569,7 +729,157 @@ status:
 
 
 
-## 4.k8s资源限制
+```shell
+# 伸缩副本
+$ kubectl scale deployment nginx --replicas=3
+```
+
+### 7.外部访问pod的方式
+
+kubernetes中对外暴露服务的方式有两种：
+
+- service（NodePort或者外部LoadBalancer）- 四层的负载均衡
+- ingress  - 七层负载均衡
+
+
+
+hostNetwork、hostPort、NodePort、LoadBalancer、Ingress
+
+```yaml
+# hostPort
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+          hostPort: 8082     # 通过物理机的IP地址和8082端口访问
+          
+- 服务监听在容器的网络栈，宿主机在防火墙上做了转发，所以查询宿主机8080端口，发现并没有服务监听
+- 查看防火墙，宿主机做了端口转发
+```
+
+
+
+```shell
+# nodePort  4层负载均衡
+NodePort 是Kubernetes中“Service”资源的一个属性，默认“Service”实现集群内服务访问，当增加“NodePort”时，服务便可以在集群外被访问到，Kubernetes默认会从宿主机的端口30000-32767之间选择一个来提供访问
+
+“nodePort”方式的Service工作原理是这样：当流量进入宿主机暴露的30000端口后，会被转发给“Service”的“Cluster IP+端口”，然后通过Iptables（也有可能是ipvs，具体看实现）转发到对应的Pod。
+```
+
+
+
+#### Ingress
+
+1.介绍
+
+```shell
+# Ingress  7层负载均衡
+- 使用Ingress暴露服务的方式在生产环境中使用的比较多
+- K8s 并没有自带 Ingress Controller，它只是一种标准，具体实现有多种，需要自己单独安装，常用的是 Nginx Ingress Controller 和 Traefik Ingress Controller。
+
+Ingress Controller 收到请求，匹配 Ingress 转发规则，匹配到了就转发到后端 Service，而 Service 可能代表的后端 Pod 有多个，选出一个转发到那个 Pod，最终由那个 Pod 处理请求。
+
+Ingress可以和Ingress Controller不在同一namespace，但必须与声明的服务在同一namespace
+
+---------------------------------------------------------------------------------
+nginx-ingress 组成
+- ingress controller：将新加入的Ingress转化成Nginx的配置文件并使之生效
+- ingress服务：将Nginx的配置抽象成一个Ingress对象，每添加一个新的服务只需写一个新的Ingress的yaml文件即可
+
+. ingress controller通过和kubernetes api交互，动态的去感知集群中ingress规则变化，然后读取它；
+. 按照自定义的规则，规则就是写明了哪个域名对应哪个service，生成一段nginx配置，再写到nginx-ingress-control的pod里；
+. 这个Ingress controller的pod里运行着一个Nginx服务，控制器会把生成的nginx配置写入/etc/nginx.conf文件中，然后reload一下使配置生效。以此达到域名分配置和动态更新的问题。
+
+```
+
+2.部署ingress-controller
+
+```shell
+$ wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.0/deploy/static/provider/cloud/deploy.yaml
+$ kubectl apply -f deploy.yaml
+$ kubectl get pod -n ingress-nginx
+NAME                                        READY   STATUS      RESTARTS   AGE
+ingress-nginx-admission-create-xbkjj        0/1     Completed   0          3h56m
+ingress-nginx-admission-patch-xqnws         0/1     Completed   0          3h56m
+ingress-nginx-controller-6bc476f787-rzdtz   1/1     Running     0          3h56m
+
+# 查看nginx-ingress服务，状态为pending,原因为未部署loadBalancer或者开启NodePort
+$ kubectl get svc -n ingress-nginx
+NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             LoadBalancer   10.233.184.22    <pending>     80:32502/TCP,443:31903/TCP   3h59m
+ingress-nginx-controller-admission   ClusterIP      10.233.212.205   <none>        443/TCP                      3h59m
+
+# 开启nginx-ingress NodePort端口
+$ kubectl edit svc ingress-nginx-controller -n ingress-nginx
+- type: LoadBalancer   # 将这个LoadBalancer修改为NodePort
+
+$ kubectl get svc -n ingress-nginx  # 查看
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             NodePort    10.233.184.22    <none>        80:32502/TCP,443:31903/TCP   36h
+ingress-nginx-controller-admission   ClusterIP   10.233.212.205   <none>        443/TCP                      36h
+
+$ curl 192.168.254.51:32502
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+```
+
+3.创建ingress
+
+```shell
+$ kubectl create ingress --help       # 查看帮助
+$ kubectl create ingress ingress1 --class=default \
+  --rule="foo.com/path*=svc:8080" \
+  --rule="bar.com/admin*=svc2:http" --dry-run=client -o yaml > ingress.yaml   #生成ingress的yaml文件
+
+$ vim ingress.yaml    # 稍微修改下
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-nginx
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: foo.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+        
+$ kubectl apply -f ingress.yaml
+$ kubectl get ingress    # 查看配置情况
+$ curl -H "Host: foo.com" http://192.168.254.51:32502
+```
+
+
+
+## 5.k8s资源限制
 
 ```yaml
 https://juejin.cn/post/6974203884369608734
@@ -589,7 +899,7 @@ resources:
 
 
 
-## 5.k8s node节点停机维护，pod如何迁移？
+## 6.k8s node节点停机维护，pod如何迁移？
 
 ```shell
 # 1. 默认迁移
@@ -652,13 +962,13 @@ $ kubectl uncordon k8s-3-218
 
 
 
-## 6.k8s监控方案
+## 7.k8s监控方案
 
 https://cloud.tencent.com/developer/article/2047144
 
 
 
-## 7.镜像下载策略
+## 8.镜像下载策略
 
 主要分为三种：
 
@@ -670,7 +980,7 @@ https://cloud.tencent.com/developer/article/2047144
 
 
 
-## 10.持久化
+## 9.持久化
 
 1）EmptyDir（空目录）：没有指定要挂载宿主机上的某个目录，直接由 Pod 内保部映射到宿主机上。类似于 docker 中的 manager volume。
 

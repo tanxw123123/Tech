@@ -86,7 +86,7 @@ $ npm run develop
 
 访问报错：http://192.168.254.71:1337/admin
 
-![image-20230111095342311](D:\Tech\linux\Ronnie\assets\image-20230111095342311.png)
+![image-20230111095342311](D:\Tech\linux\System\assets\image-20230111095342311.png)
 
 解决办法：
 
@@ -103,21 +103,21 @@ $ npm run develop
 
 新建content type
 
-![image-20230111095933098](D:\Tech\linux\Ronnie\assets\image-20230111095933098.png)
+![image-20230111095933098](D:\Tech\linux\System\assets\image-20230111095933098.png)
 
-![image-20230111100134255](D:\Tech\linux\Ronnie\assets\image-20230111100134255.png)
+![image-20230111100134255](D:\Tech\linux\System\assets\image-20230111100134255.png)
 
-![image-20230111100159847](D:\Tech\linux\Ronnie\assets\image-20230111100159847.png)
+![image-20230111100159847](D:\Tech\linux\System\assets\image-20230111100159847.png)
 
 右上角save保存：
 
-![image-20230111100244314](D:\Tech\linux\Ronnie\assets\image-20230111100244314.png)
+![image-20230111100244314](D:\Tech\linux\System\assets\image-20230111100244314.png)
 
 插值操作：
 
-![image-20230111100336078](D:\Tech\linux\Ronnie\assets\image-20230111100336078.png)
+![image-20230111100336078](D:\Tech\linux\System\assets\image-20230111100336078.png)
 
-![image-20230111100410611](D:\Tech\linux\Ronnie\assets\image-20230111100410611.png)
+![image-20230111100410611](D:\Tech\linux\System\assets\image-20230111100410611.png)
 
 
 

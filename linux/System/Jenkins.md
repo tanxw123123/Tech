@@ -86,7 +86,7 @@ jenkins配置maven环境
 
 - 系统管理---系统配置---全局属性
 
-![image-20220906185138617](D:\Tech\linux\Ronnie\.assets\image-20220906185138617.png)
+![image-20220906185138617](D:\Tech\linux\System\.assets\image-20220906185138617.png)
 
 ### 2.nodejs安装配置
 
@@ -117,7 +117,7 @@ Jenkins - SSH认证方式拉取Git代码
 $ ssh-keygen   # jenkins服务器生成密钥对，并将公钥上传git
 ```
 
-![image-20220906221430864](D:\Tech\linux\Ronnie\.assets\image-20220906221430864.png)
+![image-20220906221430864](D:\Tech\linux\System\.assets\image-20220906221430864.png)
 
 新增任务时，添加git一直报错，想到是jenkins默认启动用户是jenkins，而我们上传到git的公钥是root用户的，在此我修改jenkins的启动用户为root：
 
@@ -137,7 +137,7 @@ $ systemctl restart jenkins
 
 a. 安装配置 Publish Over SSH 插件
 
-![image-20220907094709545](D:\Tech\linux\Ronnie\.assets\image-20220907094709545.png)
+![image-20220907094709545](D:\Tech\linux\System\.assets\image-20220907094709545.png)
 
 配置ssh远程主机：
 
@@ -151,15 +151,15 @@ a. 安装配置 Publish Over SSH 插件
 
 `i.字符参数(String Parameter)`
 
-![image-20230105102354156](D:\Tech\linux\Ronnie\.assets\image-20230105102354156.png)
+![image-20230105102354156](D:\Tech\linux\System\.assets\image-20230105102354156.png)
 
 `ii.选项参数(Choice Parameter)`
 
-![image-20230105102524965](D:\Tech\linux\Ronnie\.assets\image-20230105102524965.png)
+![image-20230105102524965](D:\Tech\linux\System\.assets\image-20230105102524965.png)
 
 `iii.构建`
 
-![image-20230105102654510](D:\Tech\linux\Ronnie\.assets\image-20230105102654510.png)
+![image-20230105102654510](D:\Tech\linux\System\.assets\image-20230105102654510.png)
 
 ---
 
@@ -169,7 +169,7 @@ a. 安装配置 Publish Over SSH 插件
 
 1.删除Jenkins目录下config.xml文件中下面代码并保存
 
-![image-20230104180026396](D:\Tech\linux\Ronnie\.assets\image-20230104180026396.png)
+![image-20230104180026396](D:\Tech\linux\System\.assets\image-20230104180026396.png)
 
 2.重启jenkins
 
@@ -179,15 +179,15 @@ $ systemctl restart jenkins
 
 3.进入首页>“系统管理”>“Configure Global Security”；点选“Jenkins专有用户数据库”，并点击“保存”
 
-![image-20230104181311817](D:\Tech\linux\Ronnie\.assets\image-20230104181311817.png)
+![image-20230104181311817](D:\Tech\linux\System\.assets\image-20230104181311817.png)
 
 4.重新点击首页>“系统管理”,发现此时出现“管理用户”
 
-![image-20230104181419505](D:\Tech\linux\Ronnie\.assets\image-20230104181419505.png)
+![image-20230104181419505](D:\Tech\linux\System\.assets\image-20230104181419505.png)
 
 然后修改密码！！
 
 5.禁止匿名用户登陆
 
-![image-20230104185746519](D:\Tech\linux\Ronnie\.assets\image-20230104185746519.png)
+![image-20230104185746519](D:\Tech\linux\System\.assets\image-20230104185746519.png)
 

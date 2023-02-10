@@ -65,11 +65,11 @@ $ docker run -d -p 3000:3000 -v /data/grafana/data:/var/lib/grafana -v /data/gra
 
 点击设置--选择Data sources：
 
-![image-20220905210859915](D:\Tech\linux\Ronnie\.assets\image-20220905210859915.png)
+![image-20220905210859915](D:\Tech\linux\System\.assets\image-20220905210859915.png)
 
 然后将prometheus server地址填写：
 
-![image-20220905211132545](D:\Tech\linux\Ronnie\.assets\image-20220905211132545.png)
+![image-20220905211132545](D:\Tech\linux\System\.assets\image-20220905211132545.png)
 
 ---
 
@@ -83,23 +83,23 @@ https://grafana.com/grafana/dashboards
 
 我这里选择导入第一个：
 
-![image-20220905211655901](D:\Tech\linux\Ronnie\.assets\image-20220905211655901.png)
+![image-20220905211655901](D:\Tech\linux\System\.assets\image-20220905211655901.png)
 
 拷贝模板ID：
 
-![image-20220905211755793](D:\Tech\linux\Ronnie\.assets\image-20220905211755793.png)
+![image-20220905211755793](D:\Tech\linux\System\.assets\image-20220905211755793.png)
 
 导入模板：
 
-![image-20220905211915710](D:\Tech\linux\Ronnie\.assets\image-20220905211915710.png)
+![image-20220905211915710](D:\Tech\linux\System\.assets\image-20220905211915710.png)
 
 将ID粘贴过来：
 
-![image-20220905211951512](D:\Tech\linux\Ronnie\.assets\image-20220905211951512.png)
+![image-20220905211951512](D:\Tech\linux\System\.assets\image-20220905211951512.png)
 
 选择数据源，然后导入：
 
-![image-20220905212105034](D:\Tech\linux\Ronnie\.assets\image-20220905212105034.png)
+![image-20220905212105034](D:\Tech\linux\System\.assets\image-20220905212105034.png)
 
 
 

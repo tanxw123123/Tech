@@ -32,13 +32,13 @@ $ docker run -d \
 
 **`导入资源包`**
 
-![image-20230124161331546](D:\Tech\linux\Ronnie\assets\image-20230124161331546.png)
+![image-20230124161331546](D:\Tech\linux\System\assets\image-20230124161331546.png)
 
 
 
 **`添加集群安装计划`**
 
-![image-20230124163117853](D:\Tech\linux\Ronnie\assets\image-20230124163117853.png)
+![image-20230124163117853](D:\Tech\linux\System\assets\image-20230124163117853.png)
 
 全局配置：用户名，密码，端口
 
@@ -46,19 +46,19 @@ $ docker run -d \
 
 Kubenetes在1.24 版本里弃用docker
 
-![image-20230124163638504](D:\Tech\linux\Ronnie\assets\image-20230124163638504.png)
+![image-20230124163638504](D:\Tech\linux\System\assets\image-20230124163638504.png)
 
 配置节点：
 
 `control-plane`节点过去叫`master`节点，由于"某些原因"，现在开源社区很多项目都开始避免使用`master`这个词.
 
-![image-20230124165138624](D:\Tech\linux\Ronnie\assets\image-20230124165138624.png)
+![image-20230124165138624](D:\Tech\linux\System\assets\image-20230124165138624.png)
 
 
 
 **`安装`**
 
-![image-20230124165433668](D:\Tech\linux\Ronnie\assets\image-20230124165433668.png)
+![image-20230124165433668](D:\Tech\linux\System\assets\image-20230124165433668.png)
 
 
 
@@ -342,7 +342,7 @@ NETWORK ID     NAME      DRIVER    SCOPE
 
 **单机环境下的网络拓扑如下（主机地址是10.10.0.186/24）：**
 
-![image-20230109192801436](D:\Tech\linux\Ronnie\.assets\image-20230109192801436.png)
+![image-20230109192801436](D:\Tech\linux\System\.assets\image-20230109192801436.png)
 
 
 
@@ -554,7 +554,7 @@ $ systemctl restart docker
 
 在KEY/VALUE -> docker -> nodes 下如果有你创建的两个节点node2（192.168.254.203），node3（192.168.254.71），说明成功。
 
-![image-20230111151405108](D:\Tech\linux\Ronnie\assets\image-20230111151405108.png)
+![image-20230111151405108](D:\Tech\linux\System\assets\image-20230111151405108.png)
 
 
 

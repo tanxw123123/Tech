@@ -734,6 +734,18 @@ status:
 $ kubectl scale deployment nginx --replicas=3
 ```
 
+ 重启pod名包含“nginx”的多个pod
+
+```shell
+$ kubectl get pod -n default | grep nginx | awk '{print $1}' | xargs kubectl delete pod -n default
+```
+
+过滤包含“nginx”的pod
+
+```shell
+$ kubectl get pod --all-namespaces | grep "nginx"
+```
+
 ### 7.外部访问pod的方式
 
 kubernetes中对外暴露服务的方式有两种：
@@ -989,4 +1001,36 @@ https://cloud.tencent.com/developer/article/2047144
 3）PersistentVolume（简称 PV）： 基于 NFS 服务的 PV，也可以基于 GFS 的 PV。它的作用是统一数据持久化目录，方便管理。
 
 
+
+Hostpath方式持久化：
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:   # 需要挂载的pod路径
+        - name: data-html
+          mountPath: /usr/share/nginx/html
+
+      volumes:
+      - name: data-html  
+        hostPath:
+          path: /data/nginx/html  # 服务器节点路径
+```
 

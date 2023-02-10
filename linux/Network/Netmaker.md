@@ -102,7 +102,7 @@ Join via SSO: netclient join -n <network-name> -s <netmaker api domain>
 4. 点击创建
 5. 访问https://docs.netmaker.org/netclient.html#install在您的节点上安装 netclient。
 
-### 4.部署节点
+### 4.部署节点（客户端）
 
 先决条件：您安装的每台机器都应该已经安装了 WireGuard
 
@@ -126,13 +126,28 @@ $ curl -sL 'https://apt.netmaker.org/gpg.key' | sudo tee /etc/apt/trusted.gpg.d/
 $ curl -sL 'https://apt.netmaker.org/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/netclient.list
 $ apt update
 $ apt install netclient
-$ netclient join -t token值
+$ netclient join -t token值                 # 加入网络
 ```
 
 在所有节点上安装后，您可以通过从任何其他节点 ping 任何节点的私有地址来测试连接
 
 ```shell
 $ ping 10.20.30.254
+```
+
+连接/断开网络：（将默认替换为网络的实际名称）
+
+```shell
+> netclient connect -n network
+> netclient disconnect -n network
+
+# 您还可以从 UI 断开连接并重新连接。单击要断开/重新连接的节点，然后单击编辑。
+```
+
+列出网络：
+
+```shell
+netclient list | jq
 ```
 
 ### 5.管理节点
@@ -152,38 +167,7 @@ $ sudo netclient leave -n default
 
 
 
-## 4.网络客户端配置
-
-### 1.安装
-
-在将机器添加到网络之前，必须安装 netclient。成功的安装会在机器上设置 netclient 可执行文件并将其添加为系统守护进程。守护进程将监听它加入的任何网络的变化。
-
-客户端安装**不会**将客户端添加为任何网络的成员。安装客户端后，您必须运行：
-
-```shell
-> netclient join -t <token>
-```
-
-### 2.管理网络客户端
-
-连接/断开网络：（将默认替换为网络的实际名称）
-
-```shell
-> netclient connect -n network
-> netclient disconnect -n network
-```
-
-您还可以从 UI 断开连接并重新连接。单击要断开/重新连接的节点，然后单击编辑。
-
-列出网络：
-
-```shell
-netclient list | jq
-```
-
-
-
-## 5.外部客户端
+## 4.外部客户端（ingress status）
 
 `Netclient` 目前只支持 Linux、macOS 和 Windows，如果 Android 和 iOS 端想要加入 VPN 私有网络，只能通过 WireGuard 原生客户端来进行连接。要想做到这一点，
 
@@ -191,7 +175,99 @@ netclient list | jq
 
 ```shell
 1. 在 Dashboard 首页点击 Nodes ，然后找到你想作为出口的 Node ，再找到 Ingress Status 列，点击后会显示询问是否将该 Node 作为出口，点接受后查看对应列是否有变成绿色对号即可。
+
 2. 打开侧边栏，选择 `External Client`，上方选择 Mesh 网络，然后找到某一出口 Node，点击对应行的加号，右侧 Client就会新增一行，此时再按照不同操作系统配置即可。一个Client对应一个客户端。
+
 3. WireGuard 客户端可以下载该配置文件或者扫描二维码进行连接。
 ```
 
+## 5.出口网关（egress status）
+
+
+
+- netmaker网络：192.168.1.0/24
+
+- aws内网：10.0.0.0/16
+
+- aws内网网关机器：192.168.1.3
+
+首先，aws内网拿一台机器作为网关，加入netmaker网络:
+
+### 1.nat模式
+
+点击egress status按钮：
+
+![image-20230209101544266](D:\Tech\linux\Network\assets\image-20230209101544266.png)
+
+输入要连接的内网网段，并通过哪个网卡去访问： 此处开启 `Enable NAT for egress traffic` 代表使用的nat模式
+
+![image-20230209101802150](D:\Tech\linux\Network\assets\image-20230209101802150.png)
+
+Egress Gateway 会自动配置路由规则
+
+```shell
+$ wg show
+...
+
+------------------------------
+防火墙规则：
+# Postup
+iptables -A FORWARD -i nm-private -j ACCEPT; 
+iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE     # 开启伪装
+
+# Postdown
+iptables -D FORWARD -i nm-private -j ACCEPT; 
+iptables -t nat -D POSTROUTING -o ens5 -j MASQUERADE
+```
+
+除此之外还会在其他所有节点中添加相关路由表：
+
+```shell
+$ ip route|grep "10.0.0.0/16"
+```
+
+### 2.直接路由模式
+
+点击egress status按钮：
+
+![image-20230209101544266](D:\Tech\linux\Network\assets\image-20230209101544266.png)
+
+输入要连接的内网网段，并通过哪个网卡去访问： 此处 `[不开启] Enable NAT for egress traffic` 
+
+![image-20230210164405754](D:\Tech\linux\Network\assets\image-20230210164405754.png)
+
+在AWS中，执行操作如下：
+
+```shell
+# 从 ec2 实例的操作菜单中禁用网关实例的源/目标检查。  
+
+- 登录到您的 AWS 账户后，转到Services->EC2->Instances
+- 选择充当 NetMaker 网关的实例，然后选择 Actions- >Networking->Change Source/Dest Check
+- 如果启用则禁用设置（默认为启用）
+
+# 添加路由以通过充当 NetMaker 网关的设备将流量发送到您的本地网络。
+- 登录到您的 AWS 账户后，转到Services->VPC->Route Tables
+- 选择要更改的路由，然后选择Actions->Edit routes
+```
+
+![image-20230210164818077](D:\Tech\linux\Network\assets\image-20230210164818077.png)
+
+
+
+![image-20230210164917463](D:\Tech\linux\Network\assets\image-20230210164917463.png)
+
+最后，aws内网资源安全组加白局域网网段 192.168.1.0/24，允许局域网访问!!!
+
+
+
+### 3.将NetMaker充当VPN用
+
+点击egress status按钮：![image-20230209101544266](D:\Tech\linux\Network\assets\image-20230209101544266.png)
+
+此处输入 `0.0.0.0/0` 代表任何网络，通过 `ens5` 出去
+
+![image-20230210183425840](D:\Tech\linux\Network\assets\image-20230210183425840.png)
+
+本地查看公网IP，已经变成Egress Gateway的ip：
+
+![image-20230210183722638](D:\Tech\linux\Network\assets\image-20230210183722638.png)

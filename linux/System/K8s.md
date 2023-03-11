@@ -1,11 +1,34 @@
-## 1.快速安装docker
+## +1.快速安装docker
 
 ```shell
 # centos && ubuntu
 $ curl -sSL https://get.daocloud.io/docker | sh
 ```
 
-## 2.k8s集群搭建
+## 2.k8s组件
+
+**`i. master节点组件：`**
+
+- *API Server*：提供Kubernetes API接口，主要处理 Rest操作以及更新Etcd中的对象。是所有资源增删改查的唯一入口。
+- *Scheduler*：资源调度，绑定Pod到Node上；
+- *Controller*: 负责运行控制器进程。负责维护群集的状态，比如故障检测、自动扩展、滚动更新等；
+  - `deployment`：管理pod多副本
+  - `replicaSet`：pod的多副本，创建deployment会自动创建replicaSet，通常都用deployment
+  - `daemonSet`：每个节点运行一个pod
+  - `statefuleSet`：保证pod在整个生命周期中名称不变，其他conntroller在pod发生故障需要删除并重启时，pod的名称会发生改变。
+  - `Job`：运行结束就删除的应用，其他controller中的pod会长期持续的运行。
+- *etcd*：Kubernetes 提供的一个高可用的键值数据库，用于保存集群所有的网络配置和资源对象的状态信息，也就是保存了整个集群的状态。
+
+
+
+**`ii. node节点组件：`**
+
+- *kubelet*：负责pod的生命周期管理，维护和管理该Node上面的所有容器；
+- *kube-proxy*：是实现service的通信与负载均衡机制的重要组件，将到service的请求转发到后端的pod上；
+- *docker*：是负责容器的创建和管理工作；
+- *pod*：k8s的最小工作单元，一个pod包含一个或多个容器。pod作为整体被master调度到某个node上运行，pod中所有容器使用相同的ip和端口。
+
+## 3.k8s集群搭建
 
 ### 1.kuboard spray
 
@@ -70,30 +93,93 @@ Kubenetes在1.24 版本里弃用docker
 
 
 
-## 3.k8s组件
+## 4.Pod管理
 
-**`i. master节点组件：`**
+### 1.创建pod
 
-- *API Server*：提供Kubernetes API接口，主要处理 Rest操作以及更新Etcd中的对象。是所有资源增删改查的唯一入口。
-- *Scheduler*：资源调度，绑定Pod到Node上；
-- *Controller*: 负责运行控制器进程。负责维护群集的状态，比如故障检测、自动扩展、滚动更新等；
-  - `deployment`：管理pod多副本
-  - `replicaSet`：pod的多副本，创建deployment会自动创建replicaSet，通常都用deployment
-  - `daemonSet`：每个节点运行一个pod
-  - `statefuleSet`：保证pod在整个生命周期中名称不变，其他conntroller在pod发生故障需要删除并重启时，pod的名称会发生改变。
-  - `Job`：运行结束就删除的应用，其他controller中的pod会长期持续的运行。
-- *etcd*：Kubernetes 提供的一个高可用的键值数据库，用于保存集群所有的网络配置和资源对象的状态信息，也就是保存了整个集群的状态。
+```shell
+- 命令行
 
+$ kubectl run nginx --image=nginx    # 创建pod
+$ kubectl delete pod nginx           # 删除pod
 
+# kubectl run --help  查看帮助
+```
 
-**`ii. node节点组件：`**
+```yaml
+- yaml方式
 
-- *kubelet*：负责pod的生命周期管理，维护和管理该Node上面的所有容器；
-- *kube-proxy*：是实现service的通信与负载均衡机制的重要组件，将到service的请求转发到后端的pod上；
-- *docker*：是负责容器的创建和管理工作；
-- *pod*：k8s的最小工作单元，一个pod包含一个或多个容器。pod作为整体被master调度到某个node上运行，pod中所有容器使用相同的ip和端口。
+$ kubectl run nginx --image=nginx --image-pull-policy=IfNotPresent --dry-run=server -o yaml
 
-## 4.pod
+# --dry-run 模拟运行，并不会真的创建一个pod ， --dry-run=client输出信息少 ，--dry-run=server输出信息多， -o yaml以yaml文件的格式输出
+
+$ kubectl create deployment nginx --image=nginx --dry-run=client -o yaml      # 生成一个deployment的yaml文件
+apiVersion: apps/v1     # <---  apiVersion 是当前配置格式的版本
+kind: Deployment     #<--- kind 是要创建的资源类型，这里是 Deployment
+metadata:        #<--- metadata 是该资源的元数据，name 是必需的元数据项
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:        #<---    spec 部分是该 Deployment 的规格说明
+  replicas: 1        #<---  replicas 指明副本数量，默认为 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:        #<---   template 定义 Pod 的模板，这是配置文件的重要部分
+    metadata:        #<---     metadata 定义 Pod 的元数据，至少要定义一个 label。label 的 key 和 value 可以任意指定
+      creationTimestamp: null
+      labels:
+        app: nginx
+    spec:           #<---  spec 描述 Pod 的规格，此部分定义 Pod 中每一个容器的属性，name 和 image 是必需的
+      containers:
+      - image: nginx
+        name: nginx
+        resources: {}
+status: {}
+```
+
+基于上面的deployment服务生成service的yaml配置
+
+```shell
+# 基于上面的deployment服务生成service的yaml配置
+$ kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=client -o yaml
+$ kubectl expose deployment nginx --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+status:
+  loadBalancer: {}
+```
+
+```shell
+# 伸缩副本
+$ kubectl scale deployment nginx --replicas=3
+```
+
+ 重启pod名包含“nginx”的多个pod
+
+```shell
+$ kubectl get pod -n default | grep nginx | awk '{print $1}' | xargs kubectl delete pod -n default
+```
+
+过滤包含“nginx”的pod
+
+```shell
+$ kubectl get pod --all-namespaces | grep "nginx"
+```
 
 ###  1.pod健康检查
 
@@ -310,7 +396,7 @@ $ kubectl taint node k8s-node02 type:NoSchedule-
 
 https://www.51cto.com/article/702401.html  网络模型
 
-#### A.Docker容器间通信
+#### 1.Docker容器间通信
 
 我们安装Docker时，它会自动创建三个网络，bridge（创建容器默认连接到此网络）、 none 、host；[网址](https://cloud.tencent.com/developer/article/1674259)
 
@@ -330,9 +416,7 @@ NETWORK ID     NAME      DRIVER    SCOPE
 7376d0c6efe5   none      null      local
 ```
 
-
-
-**一、Bridge模式**
+**Bridge模式**
 
 启动docker--》创建docker0虚拟网桥（类似交换机）
 
@@ -382,7 +466,7 @@ $ docker exec test4 ping test5
 
 
 
-#### B.Docker容器跨主机通信
+#### 2.Docker容器跨主机通信
 
 ##### 1.直接路由方式
 
@@ -650,102 +734,6 @@ $ kubectl get pod -o wide   # 查看对应pod所在节点
 4.scheduler 查看 k8s api ，类似于通知机制。首先判断：pod.spec.Node == null? 若为null，表示这个Pod请求是新来的，需要创建；因此先进行调度计算，找到最`闲`的node。然后将信息在etcd数据库中更新分配结果。
 5.随后目标节点的 kubelet 进程通过 api-server 提供的接口监测到 kube-scheduler 产生的 pod 绑定事件，然后从 etcd 获取 pod 清单，下载镜像并启动容器
 
-
-
-### 6.pod管理
-
-创建pod的方式：
-
-1. 命令行
-
-```shell
-
-$ kubectl run nginx --image=nginx    # 创建pod
-$ kubectl delete pod nginx           # 删除pod
-
-# kubectl run --help  查看帮助
-```
-
-2. yaml方式
-
-```yaml
-
-$ kubectl run nginx --image=nginx --image-pull-policy=IfNotPresent --dry-run=server -o yaml
-
-# --dry-run 模拟运行，并不会真的创建一个pod ， --dry-run=client输出信息少 ，--dry-run=server输出信息多， -o yaml以yaml文件的格式输出
-
-$ kubectl create deployment nginx --image=nginx --dry-run=client -o yaml      # 生成一个deployment的yaml文件
-apiVersion: apps/v1     # <---  apiVersion 是当前配置格式的版本
-kind: Deployment     #<--- kind 是要创建的资源类型，这里是 Deployment
-metadata:        #<--- metadata 是该资源的元数据，name 是必需的元数据项
-  creationTimestamp: null
-  labels:
-    app: nginx
-  name: nginx
-spec:        #<---    spec 部分是该 Deployment 的规格说明
-  replicas: 1        #<---  replicas 指明副本数量，默认为 1
-  selector:
-    matchLabels:
-      app: nginx
-  strategy: {}
-  template:        #<---   template 定义 Pod 的模板，这是配置文件的重要部分
-    metadata:        #<---     metadata 定义 Pod 的元数据，至少要定义一个 label。label 的 key 和 value 可以任意指定
-      creationTimestamp: null
-      labels:
-        app: nginx
-    spec:           #<---  spec 描述 Pod 的规格，此部分定义 Pod 中每一个容器的属性，name 和 image 是必需的
-      containers:
-      - image: nginx
-        name: nginx
-        resources: {}
-status: {}
-```
-
-
-
-3.基于上面的deployment服务生成service的yaml配置
-
-```shell
-# 基于上面的deployment服务生成service的yaml配置
-$ kubectl expose deployment nginx --port=80 --target-port=80 --dry-run=client -o yaml
-$ kubectl expose deployment nginx --port=80 --target-port=80 --type=NodePort --dry-run=client -o yaml
-apiVersion: v1
-kind: Service
-metadata:
-  creationTimestamp: null
-  labels:
-    app: nginx
-  name: nginx
-spec:
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 80
-  selector:
-    app: nginx
-status:
-  loadBalancer: {}
-```
-
-
-
-```shell
-# 伸缩副本
-$ kubectl scale deployment nginx --replicas=3
-```
-
- 重启pod名包含“nginx”的多个pod
-
-```shell
-$ kubectl get pod -n default | grep nginx | awk '{print $1}' | xargs kubectl delete pod -n default
-```
-
-过滤包含“nginx”的pod
-
-```shell
-$ kubectl get pod --all-namespaces | grep "nginx"
-```
-
 ### 7.外部访问pod的方式
 
 kubernetes中对外暴露服务的方式有两种：
@@ -1002,35 +990,330 @@ https://cloud.tencent.com/developer/article/2047144
 
 
 
-Hostpath方式持久化：
+### 1.Hostpath方式持久化：
 
 ```yaml
+# 将主机路径挂载到pod里面
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: nginx
-  name: nginx
+    app: grafana
+  name: grafana
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nginx
+      app: grafana
   template:
     metadata:
       labels:
-        app: nginx
+        app: grafana
     spec:
       containers:
-      - image: nginx
-        name: nginx
+      - image: grafana/grafana-enterprise:8.2.0
+        name: grafana
         volumeMounts:   # 需要挂载的pod路径
-        - name: data-html
-          mountPath: /usr/share/nginx/html
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+
+        - name: grafana-config
+          mountPath: /etc/grafana
 
       volumes:
-      - name: data-html  
+      - name: grafana-data  
         hostPath:
-          path: /data/nginx/html  # 服务器节点路径
+          path: /data/grafana/data  # 服务器节点路径
+
+      - name: grafana-config 
+        hostPath:
+          path: /data/grafana/etc  # 服务器节点路径
+```
+
+### 2.pv & pvc存储
+
+#### 1.概念
+
+```shell
+# 概念
+
+PersistentVolume  (简称PV):  由管理员设置的存储
+PersistentVolumeClaim (简称PVC): 是用户存储的请求
+
+- 关于PersistentVolume的访问方式:
+ReadWriteOnce - 卷以读写方式挂载到单个节点
+ReadOnlyMany  - 卷以只读方式挂载到多个节点
+ReadWriteMany - 卷以读写方式挂载到多个节点
+
+- 关于PersistentVolume (PV) 状态:
+Available(可用状态)   -   一块空闲资源还没有被任何声明绑定
+Bound(绑定状态)       -   声明分配到PVC进行绑定，PV进入绑定状态
+Released(释放状态)    -   PVC被删除，PV进入释放状态，等待回收处理
+Failed(失败状态)      -   PV执行自动清理回收策略失败
+
+- 关于PersistentVolumeClaims (PVC) 状态:
+Pending(等待状态)     -   等待绑定PV
+Bound(绑定状态)       -   PV已绑定PVC
+```
+
+```shell
+# StorageClass
+- PV是运维人员来创建的，开发操作PVC，可是大规模集群中可能会有很多PV，如果这些PV都需要运维手动来处理这也是一件很繁琐的事情，所以就有了动态供给概念，也就是Dynamic Provisioning。
+
+- 而我们上面的创建的PV都是静态供给方式，也就是Static Provisioning。而动态供给的关键就是StorageClass，它的作用就是创建PV模板。
+
+- 创建StorageClass里面需要定义PV属性比如存储类型、大小等；另外创建这种PV需要用到存储插件。最终效果是，用户提交PVC，里面指定存储类型，如果符合我们定义的StorageClass，则会为其自动创建PV并进行绑定。
+
+
+```
+
+#### 2.本地持久化存储
+
+本地持久化存储（Local Persistent Volume）就是把数据存储在POD运行的宿主机上
+
+```shell
+# 为什么需要这种类型的存储呢？
+- 有时候你的应用对磁盘IO有很高的要求，网络存储性能肯定不如本地的高，尤其是本地使用了SSD这种磁盘。
+```
+
+```shell
+- 但这里有个问题，通常我们先创建PV，然后创建PVC，这时候如果两者匹配那么系统会自动进行绑定，
+- 哪怕是动态PV创建，也是先调度POD到任意一个节点，然后根据PVC来进行创建PV然后进行绑定最后挂载到POD中，
+- 可是本地持久化存储有一个问题就是这种PV必须要先准备好，而且不一定集群所有节点都有这种PV，如果POD随意调度肯定不行，
+
+- 如何保证POD一定会被调度到有PV的节点上呢？
+这时候就需要在PV中声明节点亲和，且POD被调度的时候还要考虑卷的分布情况。
+```
+
+```yaml
+# 创建pv
+$ cat grafana-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:     # PV建立不要加名称空间，因为PV属于集群级别的
+  name: grafana-data-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: grafana-data-storage
+  local:
+    path: /data/grafana/data       # PV对应的本地磁盘的路径
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - k8s-master      # 指定节点名称，磁盘存在与k8s-master节点上，也就意味着 Pod使用这个 PV就必须运行在 k8s-master 上
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: grafana-config-storage
+  local:
+    path: /data/grafana/etc
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - k8s-master
+```
+
+
+
+```yaml
+# 创建pvc
+$ cat grafana-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-data-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: grafana-data-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-config-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: grafana-config-storage
+```
+
+
+
+```yaml
+# 创建deployment
+$ cat grafana-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana-enterprise:8.2.0
+        name: grafana
+        volumeMounts:   # 需要挂载的pod路径
+        - name: grafana-data
+          mountPath: /var/lib/grafana
+
+        - name: grafana-config
+          mountPath: /etc/grafana
+
+      volumes:
+      - name: grafana-data  
+        persistentVolumeClaim:
+          claimName: grafana-data-claim   # 服务器节点路径
+
+      - name: grafana-config 
+        persistentVolumeClaim:
+          claimName: grafana-config-claim  # 服务器节点路径
+```
+
+
+
+```yaml
+# 创建服务
+$ cat garana-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: grafana
+  type: NodePort
+```
+
+------
+
+**延迟绑定**
+
+```yaml
+# 定义pv
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: example-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local-storage
+  local: # local类型
+    path: /data/vol1  # 节点上的具体路径
+  nodeAffinity: # 这里就设置了节点亲和
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node01 # 这里我们使用node01节点，该节点有/data/vol1路径
+```
+
+```yaml
+# 定义存储类
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer    # 延迟绑定
+```
+
+```yaml
+# 定义pvc
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: local-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-storage
+```
+
+```yaml
+# 定义pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomcat-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      appname: myapp
+  template:
+    metadata:
+      name: myapp
+      labels:
+        appname: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: tomcat:8.5.38-jre8
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        volumeMounts:
+          - name: tomcatedata
+            mountPath : "/data"
+      volumes:
+        - name: tomcatedata
+          persistentVolumeClaim:
+            claimName: local-claim
 ```
 

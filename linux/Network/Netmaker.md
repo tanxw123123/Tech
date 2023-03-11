@@ -19,7 +19,7 @@ Netmaker 的核心是管理跨机器的 WireGuard，以创建合理的网络
 另外，还要求有一个能更改DNS记录的域名
 
 ```
-oball48.com
+aobo027.com
 ```
 
 
@@ -52,31 +52,15 @@ $ sudo wget -qO /root/nm-quick-interactive.sh https://raw.githubusercontent.com/
 
 ```shell
 # 解析域名
-api.netmaker.oball48.com
-broker.netmaker.oball48.com
-dashboard.netmaker.oball48.com
-netmaker.oball48.com
+api.aobo027.com
+broker.aobo027.com
+dashboard.aobo027.com
+netmaker.aobo027.com
 ```
 
-配置：
+访问： https://dashboard.aobo027.com
 
-```
-Access key: ba151c689ac88679
-
-Access token: eyJhcGljb25uc3RyaW5nIjoiYXBpLm5ldG1ha2VyLm9iYWxsNDguY29tOjQ0MyIsIm5ldHdvcmsiOiJ3c2R5LXRlc3QiLCJrZXkiOiJiYTE1MWM2ODlhYzg4Njc5IiwibG9jYWxyYW5nZSI6IiJ9
-
-join command: netclient join -t eyJhcGljb25uc3RyaW5nIjoiYXBpLm5ldG1ha2VyLm9iYWxsNDguY29tOjQ0MyIsIm5ldHdvcmsiOiJ3c2R5LXRlc3QiLCJrZXkiOiJiYTE1MWM2ODlhYzg4Njc5IiwibG9jYWxyYW5nZSI6IiJ9
-
-docker: docker run -d --network host  --privileged -e TOKEN=eyJhcGljb25uc3RyaW5nIjoiYXBpLm5ldG1ha2VyLm9iYWxsNDguY29tOjQ0MyIsIm5ldHdvcmsiOiJ3c2R5LXRlc3QiLCJrZXkiOiJiYTE1MWM2ODlhYzg4Njc5IiwibG9jYWxyYW5nZSI6IiJ9 -v /etc/netclient:/etc/netclient --name netclient gravitl/netclient:v0.17.1
-
-Join via Basic Auth: netclient join -n <network-name> -u <user name> -s <netmaker api domain>
-
-Join via SSO: netclient join -n <network-name> -s <netmaker api domain>
-```
-
-
-
-访问： https://dashboard.netmaker.oball48.com/
+admin Linux123.
 
 ## 3.入门
 
@@ -255,6 +239,8 @@ $ ip route|grep "10.0.0.0/16"
 
 
 ![image-20230210164917463](D:\Tech\linux\Network\assets\image-20230210164917463.png)
+
+网关服务器安全组添加： 允许UDP端口51820-51920，0.0.0.0/0
 
 最后，aws内网资源安全组加白局域网网段 192.168.1.0/24，允许局域网访问!!!
 

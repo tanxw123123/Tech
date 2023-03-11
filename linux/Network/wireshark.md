@@ -64,7 +64,7 @@ $ route del -net 0.0.0.0  #删除默认路由
 
 **ARP协议工作过程 **
 
-![image-20221031104943960](D:\Tech\linux\System\.assets\image-20221031104943960.png)
+![image-20221031104943960](D:\Tech\linux\Network\assets\image-20221031104943960.png)
 
 **A主机和B主机在同一网段：**
 

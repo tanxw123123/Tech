@@ -66,32 +66,32 @@ acl whitelist src 10.0.0.1/32
 
 ```shell
 # 修改 /etc/yum.conf
-proxy=http://10.20.11.12:3128
+proxy=http://10.20.11.12:38090
 ```
 
 2.wget代理
 
 ```shell
 # 修改 /etc/wgetrc
-http_proxy=http://10.20.11.12:3128
-https_proxy=http://10.20.11.12:3128
-ftp_proxy=http://10.20.11.12:3128
+http_proxy=http://10.20.11.12:38090
+https_proxy=http://10.20.11.12:38090
+ftp_proxy=http://10.20.11.12:38090
 ```
 
 3.curl代理
 
 ```shell
 # 修改 /etc/profile(所有用户) 或 ~/.bashrc(当前用户)
-alias curl="curl -x 10.20.11.12:3128"
+alias curl="curl -x 10.20.11.12:38090"
 ```
 
 4.全局代理
 
 ```shell
 # 修改 /etc/profile(所有用户) 或 ~/.bashrc(当前用户)
-http_proxy=http://10.20.11.12:3128
-https_proxy=http://10.20.11.12:3128
-ftp_proxy=http://10.20.11.12:3128
+http_proxy=http://10.20.11.12:38090
+https_proxy=http://10.20.11.12:38090
+ftp_proxy=http://10.20.11.12:38090
 export http_proxy
 export https_proxy
 export ftp_proxy

@@ -248,6 +248,8 @@ $ ./kafka-console-consumer.sh \
 
 ## 5.部署elasticsearch
 
+### 1.手动安装
+
 **1.安装es**
 
 https://www.elastic.co/cn/downloads/past-releases#elasticsearch
@@ -389,9 +391,63 @@ $ grunt server
 
 访问：http://192.168.254.51:9100
 
+### 2.docker安装
 
+```shell
+- 临时安装生产文件：
+
+$ docker run -d --name elasticsearch  -p 9200:9200 -p 9300:9300 -e  "discovery.type=single-node" -e ES_JAVA_OPTS="-Xms256m -Xmx256m" elasticsearch:7.17.1
+
+参数说明:
+-d 后台启动
+–name 起别名即：NAMES
+-p 9200:9200 将端口映射出来
+elasticsearch的9200端口是供外部访问使用；9300端口是供内部访问使用集群间通讯
+-e "discovery.type=single-node"单节点启动
+-e ES_JAVA_OPTS="-Xms256m -Xmx256m" 限制内存大小
+```
+
+```shell
+- 设置外部数据卷
+
+$ mkdir -p /data/elasticsearch/{config,data,logs,plugins}
+
+将容器文件拷贝出来
+$ docker cp elasticsearch:/usr/share/elasticsearch/config /data/elasticsearch
+$ docker cp elasticsearch:/usr/share/elasticsearch/logs /data/elasticsearch
+$ docker cp elasticsearch:/usr/share/elasticsearch/data /data/elasticsearch
+$ docker cp elasticsearch:/usr/share/elasticsearch/plugins /data/elasticsearch
+
+$ vim /data/elasticsearch/config/elasticsearch.yml
+cluster.name: "docker-cluster"
+network.hosts:0.0.0.0
+# 跨域
+http.cors.allow-origin: "*"
+http.cors.enabled: true
+http.cors.allow-headers: Authorization,X-Requested-With,Content-Length,Content-Type
+```
+
+```
+docker stop elasticsearch
+docker rm elasticsearch
+```
+
+```shell
+$ docker run -d --name elasticsearch \
+-p 9200:9200 \
+-p 9300:9300 \
+-e "discovery.type=single-node" \
+-e ES_JAVA_OPTS="-Xms256m -Xmx256m" \
+-v /data/elasticsearch/logs:/usr/share/elasticsearch/logs \
+-v /data/elasticsearch/data:/usr/share/elasticsearch/data \
+-v /data/elasticsearch/plugins:/usr/share/elasticsearch/plugins \
+-v /data/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml \
+elasticsearch:7.17.1
+```
 
 ## 6.安装logstash
+
+### 1.手动安装
 
 首先，安装java环境
 
@@ -521,6 +577,52 @@ $ vim /etc/hosts
 # 不配置hosts,logstash无法消费kafka消息
 ```
 
+### 2.docker安装
+
+```shell
+$ docker run -d --name=logstash logstash:7.14.0
+
+# 进入容器安装插件
+$ docker exec -it 容器ID /bin/bash
+bash-4.2$ bin/logstash-plugin install logstash-output-stomp
+bash-4.2$ bin/logstash-plugin install logstash-filter-multiline
+
+$ docker cp logstash:/usr/share/logstash /data/logstash       # 将目标拷贝到本地
+$ chmod 777 -R /data/logstash/
+$ mkdir /data/logstash/config/conf.d
+```
+
+```shell
+$ vim /data/logstash/config/conf.d/logstash.conf
+.....
+```
+
+```shell
+# 配置conf
+$ vim /data/logstash/config/pipelines.yml
+- pipeline.id: main
+  path.config: "/usr/share/logstash/config/conf.d/logstash.conf"   
+
+# path也是在docker里的绝对路径
+
+# 配置java
+$ vim /data/logstash/config/jvm.options
+-Xms512m
+-Xmx512m
+```
+
+```shell
+$ vim /data/logstash/config/logstash.yml
+http.host: "0.0.0.0"
+#xpack.monitoring.elasticsearch.hosts: [ "http://elasticsearch:9200" ]   
+将连接es这行注释
+```
+
+```shell
+# 启动
+$ docker run -d --name=logstash -v /data/logstash:/usr/share/logstash -p 5044:5044 logstash:7.14.0
+```
+
 ## 7.安装kibana
 
 https://www.elastic.co/cn/downloads/past-releases#kibana  安装包地址
@@ -627,7 +729,16 @@ output.kafka:
   compression: gzip
   max_message_bytes: 1000000
   required_acks: 1
+# logging.to_files: true
+
+# filebeat日志输出位置
+logging.level: info 日志级别
 logging.to_files: true
+logging.files:
+path: /var/log/filebeat
+name: filebeat.log
+keepfiles: 7         # 保留7天
+permissions: 0644
 ```
 
 ```shell

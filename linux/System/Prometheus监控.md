@@ -108,6 +108,51 @@ $ systemctl start prometheus
 $ systemctl enable prometheus
 ```
 
+
+
+prometheus完整配置文件：
+
+```yaml
+# my global config
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 10.0.27.224:9093
+
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    file_sd_configs:
+    - refresh_interval: 1m
+      files:
+      - "/data/prometheus/blackbox/goc.yml"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115  # The blackbox exporter's real hostname:port.
+
+```
+
+
+
 ---
 
 
@@ -121,7 +166,7 @@ $ useradd prometheus
 $ usermod -s /sbin/nologin prometheus 
 $ wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz -P /data
 $ cd /data && tar -xf node_exporter-1.3.1.linux-amd64.tar.gz
-$ mv node_exporter-1.3.1 node_exporter
+$ mv node_exporter-1.3.1.linux-amd64 node_exporter
 $ chown -R prometheus.prometheus node_exporter
 ```
 
@@ -132,7 +177,7 @@ $ cat /etc/systemd/system/node_exporter.service
 [Service]
 User=prometheus
 Group=prometheus
-ExecStart=/usr/local/node_exporter/node_exporter
+ExecStart=/data/node_exporter/node_exporter
 
 [Install]
 WantedBy=multi-user.target
@@ -161,7 +206,7 @@ $ systemctl enable node_exporter
 $ cd /data
 $ wget https://github.com/prometheus/alertmanager/releases/download/v0.24.0/alertmanager-0.24.0.linux-amd64.tar.gz
 $ tar -xf alertmanager-0.24.0.linux-amd64.tar.gz
-$ mv alertmanager-0.24.0.linux-amd64.tar.gz alertmanager
+$ mv alertmanager-0.24.0.linux-amd64 alertmanager
 $ chown -R prometheus.prometheus alertmanager
 ```
 
@@ -198,7 +243,7 @@ route:
   group_by: ['alertname']
   group_wait: 30s
   group_interval: 5m
-  repeat_interval: 1h
+  repeat_interval: 24h       # 默认1小时，我这里改成24小时
   receiver: 'web.hook'
 receivers:
   - name: 'web.hook'
@@ -366,7 +411,7 @@ $ curl -d "hello python3" -X POST http://ip:8000/api/alert/haha
 ```shell
 $ wget -P /data https://github.com/prometheus/blackbox_exporter/releases/download/v0.21.0/blackbox_exporter-0.21.0.linux-amd64.tar.gz
 $ tar -xf blackbox_exporter-0.21.0.linux-amd64.tar.gz
-$ mv blackbox_exporter-0.21.0.linux-amd64.tar.gz blackbox_exporter
+$ mv blackbox_exporter-0.21.0.linux-amd64 blackbox_exporter
 $ chown -R prometheus.prometheus blackbox_exporter
 ```
 
@@ -418,9 +463,7 @@ scrape_configs:
         replacement: 127.0.0.1:9115  # The blackbox exporter's real hostname:port.
 ```
 
-```shell
-$ chown -R prometheus.prometheus blackbox
-```
+
 
 ---
 
@@ -435,13 +478,99 @@ groups:
 - name: 证书还有30天过期
   rules:
   - alert: ssl证书过期告警
-    expr: floor((probe_ssl_earliest_cert_expiry - time()) / 86400 < 200)
-    for: 15s
+    expr: floor((probe_ssl_earliest_cert_expiry - time()) / 86400 < 10)
+    for: 1m
     labels:
       severity: "告警等级: warning"
     annotations:
       summary: "告警主机: {{ $labels.job }}"
-      description: '告警问题:{{ $labels.instance }}的证书还有{{ printf "%.1f" $value }}天就过期了，请尽快更新证书'
+      description: '告警问题:{{ $labels.instance }} 的证书还有{{ printf "%.1f" $value }}天就过期了，请尽快更新证书'
+
+  - alert: http状态码
+    expr: probe_http_status_code != 200
+    for: 5m
+    labels:
+      severity: "告警等级: error"
+    annotations:
+      summary: "告警主机: {{ $labels.job }}"
+      description: '告警问题:{{ $labels.instance }} 检测状态码 ≠ 200，当前值 = [{{ $value }}]'      
+```
+
+
+
+prometheus完整配置文件如下：
+
+```yaml
+# my global config
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 10.0.27.224:9093
+
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    file_sd_configs:
+    - refresh_interval: 1m
+      files:
+      - "/data/prometheus/blackbox/goc.yml"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115  # The blackbox exporter's real hostname:port.
+```
+
+```shell
+$ curl -X POST http://localhost:9090/-/reload    # 热加载prometheus配置
+```
+
+
+
+## 8.debug
+
+```shell
+1. blackbox监控域名返回状态码 probe_http_status_code 为0
+$ curl "ip:9115/probe?module=http_2xx&target=https://域名"|grep status
+probe_http_status_code 0
+
+在prometheus服务器上面 curl 状态码为200正常
+$ curl -I https://域名  返回值为200
+
+调试可以使用debug，这样便于发现问题：
+$ curl "http://ip:9115/probe?module=http_2xx&target=https://域名&debug=true"
+
+---
+原因：preferred_ip_protocol 默认值是ipv6
+
+- 解决办法：
+修改blackbox配置文件，增加两行：
+$ vim ../blackbox.yml
+
+```
+
+![image-20230327121839043](D:\Tech\linux\System\assets\image-20230327121839043.png)
+
+```shell
+$ systemctl restart blackbox_exporter  # 重启blackbox
+至此恢复！
 ```
 
 

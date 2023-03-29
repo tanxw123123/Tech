@@ -63,6 +63,8 @@ $ docker run -d -p 3000:3000 -v /data/grafana/data:/var/lib/grafana -v /data/gra
 
 ## 2.配置数据源
 
+### 1.添加prometheus数据源
+
 点击设置--选择Data sources：
 
 ![image-20220905210859915](D:\Tech\linux\System\.assets\image-20220905210859915.png)
@@ -72,6 +74,28 @@ $ docker run -d -p 3000:3000 -v /data/grafana/data:/var/lib/grafana -v /data/gra
 ![image-20220905211132545](D:\Tech\linux\System\.assets\image-20220905211132545.png)
 
 ---
+
+
+
+### 2.添加aws的es数据源
+
+
+
+必须在 grafana.ini 中启用此选项：
+
+```
+[auth]
+sigv4_auth_enabled = true
+```
+
+通过sigv4来验证aws的ES，Grafana v7.3以上的版本就可以通过aws sigv4来身份验证
+
+https://grafana.com/docs/grafana/latest/datasources/elasticsearch/?utm_source=grafana_add_ds
+
+```shell
+打开sigV4 auth
+然后配置access secret key 还有区域应该就可以了
+```
 
 
 

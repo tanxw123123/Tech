@@ -1,4 +1,4 @@
-## +1.快速安装docker
+## 1.快速安装docker
 
 ```shell
 # centos && ubuntu
@@ -181,7 +181,7 @@ $ kubectl get pod -n default | grep nginx | awk '{print $1}' | xargs kubectl del
 $ kubectl get pod --all-namespaces | grep "nginx"
 ```
 
-###  1.pod健康检查
+###  2.pod健康检查
 
 `1.livenessProbe探针（存活检查）`
 
@@ -318,7 +318,7 @@ nginx      192.168.93.169:80   14d
 
 
 
-### 2.pod调度方式
+### 3.pod调度方式
 
 ```
 https://cloud.tencent.com/developer/article/1644857
@@ -392,7 +392,7 @@ $ kubectl taint node k8s-node02 type:NoSchedule-
 
 ```
 
-### 3.pod间通信
+### 4.pod间通信
 
 https://www.51cto.com/article/702401.html  网络模型
 
@@ -699,7 +699,7 @@ $ wget https://docs.projectcalico.org/manifests/calico.yaml
 
 
 
-### 4.pod状态
+### 5.pod状态
 
 Pending：pod 正在等待 kube-scheduler 选择合适的节点创建。
 
@@ -725,7 +725,7 @@ $ kubectl get pod -o wide   # 查看对应pod所在节点
 
 
 
-### 5.创建pod流程
+### 6.创建pod流程
 
 1.客户端提交 Pod 的配置信息（可以是 yaml 文件定义好的信息）到 kube-apiserver；
 2.Apiserver 收到指令后，通知给 controller-manager 创建一个资源对象；
@@ -783,11 +783,11 @@ NodePort 是Kubernetes中“Service”资源的一个属性，默认“Service�
 “nodePort”方式的Service工作原理是这样：当流量进入宿主机暴露的30000端口后，会被转发给“Service”的“Cluster IP+端口”，然后通过Iptables（也有可能是ipvs，具体看实现）转发到对应的Pod。
 ```
 
+#### 1.service
 
+#### 2.Ingress
 
-#### Ingress
-
-1.介绍
+##### 1.介绍
 
 ```shell
 # Ingress  7层负载均衡
@@ -809,33 +809,78 @@ nginx-ingress 组成
 
 ```
 
-2.部署ingress-controller
+##### 2.部署ingress-controller
 
 ```shell
+- 下载部署文件
 $ wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.2.0/deploy/static/provider/cloud/deploy.yaml
+
+- 修改文件
+$ vim deploy.yaml
+spec:
+  externalTrafficPolicy: Local
+  ports:
+  - appProtocol: http
+    name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+    nodePort: 80    # 添加此行
+  - appProtocol: https
+    name: https
+    port: 443
+    protocol: TCP
+    targetPort: https
+    nodePort: 443   # 添加此行
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  type: NodePort   # 修改为NodePort
+```
+
+```shell
 $ kubectl apply -f deploy.yaml
+# 启动报错如下：
+The Service "ingress-nginx-controller" is invalid: spec.ports[0].nodePort: Invalid value: 80: provided port is not in the valid range. The range of valid ports is 30000-32767
+
+- 是因为k8s的node节点的端口默认被限制在30000-32767的范围
+
+# 解决办法：
+编辑 kube-apiserver.yaml文件
+$ vim /etc/kubernetes/manifests/kube-apiserver.yaml
+将spec.containers.command的最后面这一行，如下内容
+- --service-node-port-range=30000-32767  修改为
+- --service-node-port-range=1-65535
+
+然后重启kubelet
+$ systemctl restart kubelet
+```
+
+```shell
+
 $ kubectl get pod -n ingress-nginx
 NAME                                        READY   STATUS      RESTARTS   AGE
-ingress-nginx-admission-create-xbkjj        0/1     Completed   0          3h56m
-ingress-nginx-admission-patch-xqnws         0/1     Completed   0          3h56m
-ingress-nginx-controller-6bc476f787-rzdtz   1/1     Running     0          3h56m
+ingress-nginx-admission-create-hcwhb        0/1     Completed   0          14m
+ingress-nginx-admission-patch-zws8l         0/1     Completed   0          14m
+ingress-nginx-controller-6bc476f787-7zsgw   1/1     Running     0          14m
 
-# 查看nginx-ingress服务，状态为pending,原因为未部署loadBalancer或者开启NodePort
+
+#- 查看nginx-ingress服务，状态为pending,原因为未部署loadBalancer或者开启NodePort  #####上面已经修改了deploy.yaml, 此步骤忽略
+
+
 $ kubectl get svc -n ingress-nginx
-NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
-ingress-nginx-controller             LoadBalancer   10.233.184.22    <pending>     80:32502/TCP,443:31903/TCP   3h59m
-ingress-nginx-controller-admission   ClusterIP      10.233.212.205   <none>        443/TCP                      3h59m
+NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                 AGE
+ingress-nginx-controller             NodePort    10.233.71.167    <none>        80:80/TCP,443:443/TCP   15m
+ingress-nginx-controller-admission   ClusterIP   10.233.111.147   <none>        443/TCP                 15m
 
-# 开启nginx-ingress NodePort端口
-$ kubectl edit svc ingress-nginx-controller -n ingress-nginx
-- type: LoadBalancer   # 将这个LoadBalancer修改为NodePort
+- 安装完控制器成后会自动创建一个 名为 nginx 的 IngressClass 对象
+$ kubectl get ingressclass
+NAME    CONTROLLER             PARAMETERS   AGE
+nginx   k8s.io/ingress-nginx   <none>       15m
 
-$ kubectl get svc -n ingress-nginx  # 查看
-NAME                                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
-ingress-nginx-controller             NodePort    10.233.184.22    <none>        80:32502/TCP,443:31903/TCP   36h
-ingress-nginx-controller-admission   ClusterIP   10.233.212.205   <none>        443/TCP                      36h
 
-$ curl 192.168.254.51:32502
+$ curl 192.168.254.51
 <html>
 <head><title>404 Not Found</title></head>
 <body>
@@ -845,23 +890,143 @@ $ curl 192.168.254.51:32502
 </html>
 ```
 
-3.创建ingress
+##### 3.创建ingress
 
 ```shell
 $ kubectl create ingress --help       # 查看帮助
-$ kubectl create ingress ingress1 --class=default \
+$ kubectl create ingress my-tomcat --class=nginx \
   --rule="foo.com/path*=svc:8080" \
-  --rule="bar.com/admin*=svc2:http" --dry-run=client -o yaml > ingress.yaml   #生成ingress的yaml文件
+  --rule="bar.com/admin*=svc2:http" --dry-run=client -o yaml > ingress-tomcat.yaml   #生成ingress的yaml文件
+```
 
-$ vim ingress.yaml    # 稍微修改下
+```yaml
+# 修改文件
+$ vim ingress-tomcat.yaml    
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  namespace: default
+  name: my-tomcat
+spec:
+  ingressClassName: nginx    # 关联的 ingress-nginx 控制器,上面查询的 kubectl get ingressclass
+  rules:
+  - host: tomcat.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: tomcat
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
+```
+
+```shell
+- 执行yaml文件
+$ kubectl apply -f ingress-tomcat.yaml
+$ kubectl get ingress    # 查看配置情况
+NAME        CLASS   HOSTS        ADDRESS         PORTS   AGE
+my-tomcat   nginx   tomcat.com   10.233.71.167   80      10m
+```
+
+```shell
+- 查看controller的nginx配置文件：
+$ kubectl exec -it ingress-nginx-controller-6bc476f787-7zsgw -n ingress-nginx /bin/bash
+
+$ grep 'tomcat.com' nginx.conf
+	## start server tomcat.com
+		server_name tomcat.com ;
+	## end server tomcat.com
+```
+
+##### 4.创建deploy服务
+
+```yaml
+--- 创建tomcat服务 ---
+
+$ vim tomcat-deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tomcat
+  name: tomcat-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tomcat
+  template:
+    metadata:
+      labels:
+        app: tomcat
+    spec:
+      containers:
+      - image: tomcat:7.0.57-jre7
+        name: tomcat
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tomcat
+  name: tomcat
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: tomcat
+```
+
+```shell
+$ kubectl apply -f tomcat-deploy.yaml
+```
+
+```shell
+- 由于我的域名不是公网解析的，所以我们修改本地hosts，以便访问
+
+- 先查看controller运行在哪个节点
+$ kubectl get pod -n ingress-nginx -o wide
+NAME                                        READY   STATUS      RESTARTS   AGE   IP              NODE        NOMINATED NODE   READINESS GATES
+ingress-nginx-admission-create-hcwhb        0/1     Completed   0          13m   10.234.24.77    k8s-node2   <none>           <none>
+ingress-nginx-admission-patch-zws8l         0/1     Completed   0          13m   10.234.226.67   k8s-node1   <none>           <none>
+ingress-nginx-controller-6bc476f787-7zsgw   1/1     Running     0          13m   10.234.24.78    k8s-node2   <none>           <none>
+
+# 我们看到controller运行在node2节点，node2节点的ip是：192.168.254.53
+
+- 本地windows hosts文件解析：
+192.168.254.53 tomcat.com
+```
+
+访问：
+
+![image-20230315211609212](D:\Tech\linux\System\assets\image-20230315211609212.png)
+
+---
+
+
+
+**创建一个nginx项目：**
+
+```yaml
+- 创建nginx的ingress文件
+
+$ vim ingress-nginx.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: default
   name: my-nginx
 spec:
   ingressClassName: nginx
   rules:
-  - host: foo.com
+  - host: mynginx.com
     http:
       paths:
       - backend:
@@ -872,9 +1037,188 @@ spec:
         path: /
         pathType: Prefix
         
-$ kubectl apply -f ingress.yaml
-$ kubectl get ingress    # 查看配置情况
-$ curl -H "Host: foo.com" http://192.168.254.51:32502
+$ kubectl apply -f ingress-nginx.yaml        
+```
+
+```yaml
+- 创建nginx的deployment文件
+$ vim nginx-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  name: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        ports:
+        - containerPort: 80
+                
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx
+  name: nginx
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx
+    
+$ kubectl apply -f nginx-deployment.yaml
+```
+
+```
+- 最后在windows本地解析域名
+192.168.254.53 mynginx.com
+```
+
+访问测试：
+
+![image-20230316102218296](D:\Tech\linux\System\assets\image-20230316102218296.png)
+
+
+
+##### 5.基于 TLS 的ingress服务
+
+```shell
+- 执行以下命令，生成TLS证书
+
+$ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=mynginx.com/O=mynginx.com"
+```
+
+```shell
+- 执行以下命令根据生成的TLS证书文件创建集群的secret
+
+$ kubectl create secret tls cert-example --key tls.key --cert tls.crt
+```
+
+```shell
+- 执行以下命令，查看新建TLS证书配置
+
+$ kubectl get secret cert-example
+```
+
+```yaml
+- 配置ingress
+
+$ cat ingress-nginx.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: default
+  name: my-nginx
+spec:
+  tls:                       #
+  - hosts:                   #
+    - mynginx.com             #
+    secretName: cert-example  #
+  ingressClassName: nginx
+  rules:
+  - host: mynginx.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+        
+$ kubectl apply -f ingress-nginx.yaml        
+```
+
+```shell
+$ kubectl apply -f nginx-deployment.yaml
+```
+
+```shell
+# 访问https
+
+$ curl -k -v https://mynginx.com
+* About to connect() to mynginx.com port 443 (#0)
+*   Trying 192.168.254.53...
+* Connected to mynginx.com (192.168.254.53) port 443 (#0)
+* Initializing NSS with certpath: sql:/etc/pki/nssdb
+* skipping SSL peer certificate verification
+* SSL connection using TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+* Server certificate:
+* 	subject: O=mynginx.com,CN=mynginx.com
+* 	start date: Mar 17 04:33:21 2023 GMT
+* 	expire date: Mar 16 04:33:21 2024 GMT
+* 	common name: mynginx.com
+* 	issuer: O=mynginx.com,CN=mynginx.com
+> GET / HTTP/1.1
+> User-Agent: curl/7.29.0
+> Host: mynginx.com
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Date: Fri, 17 Mar 2023 05:09:57 GMT
+< Content-Type: text/html
+< Content-Length: 615
+< Connection: keep-alive
+< Last-Modified: Tue, 13 Dec 2022 15:53:53 GMT
+< ETag: "6398a011-267"
+< Accept-Ranges: bytes
+< Strict-Transport-Security: max-age=15724800; includeSubDomains
+< 
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+
+....
+```
+
+### 8.pod报错
+
+#### 1.kubelet 压力驱逐
+
+![image-20230320170503937](D:\Tech\linux\System\assets\image-20230320170503937.png)
+
+查看详细报错信息：
+
+```shell
+$ kubectl describe pod node-exporter-qxvnw -n monitoring
+Warning  Evicted    2m55s  kubelet            The node had condition: [DiskPressure]
+
+```
+
+原因是 kubelet 检测到本地磁盘使用率超过了 85% ，这是 kubelet 的默认配置!
+
+
+
+**解决办法：**
+
+1.`清理磁盘`  /  `磁盘扩容`  /  `修改kubelet默认配置`
+
+2.`重启对应节点kubelet`
+
+```shell
+$ systemctl restart kubelet
+```
+
+3.`重启pod`
+
+```shell
+$ kubectl delete pod node-exporter-qxvnw -n monitoring
 ```
 
 
@@ -966,6 +1310,649 @@ $ kubectl uncordon k8s-3-218
 
 https://cloud.tencent.com/developer/article/2047144
 
+```shell
+需要关注以下三个方面：
+
+- Kubernetes集群本身的监控，主要是kubernetes的各个组件
+- kubernetes集群中Pod的监控，Pod的CPU、内存、网络、磁盘等监控
+- 集群内部应用的监控，针对应用本身的监控
+```
+
+```
+在kubernetes中的监控需要考虑到这几个方面：
+
+应该给Pod打上哪些label，这些label将成为监控的metrics。
+当应用的Pod漂移了之后怎么办？因为要考虑到Pod的生命周期比虚拟机和物理机短的多，如何持续监控应用的状态？
+更多的监控项，kubernetes本身、容器、应用等。
+监控指标的来源，是通过heapster收集后汇聚还是直接从每台主机的docker上取？
+```
+
+```
+通过Prometheus提供的服务自动发现机制，可以实现对Kubernetes集群的自动化监控：当在集群中部署了新的应用时，Prometheus可以自动发现Pod、Service等相关的监控信息；当相关的资源被从Kubernetes集群中删除时，Prometheus也会自动移除这个应用相关的资源监控。
+```
+
+https://help.aliyun.com/document_detail/123394.html
+
+https://cloud.tencent.com/developer/article/2146317?from=article.detail.2146323&areaSource=106000.1&traceId=6NSXQa8eifmGWXUAOSTxn 上篇
+
+
+
+
+
+https://www.cnblogs.com/cyh00001/p/16725312.html
+
+### 1.监控Kubernetes集群
+
+#### 1.安装Prometheus
+
+```yaml
+1.创建命名空间
+
+$ vim namespace.yml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+```
+
+```yaml
+2.创建RBAC规则
+RBAC为Kubernetes的授权认证方式，该规则用于授权Prometheus获取资源信息
+
+$ vim prometheus-rbac.yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+  
+  
+查看RBAC
+$ kubectl  get sa prometheus -n monitoring
+$ kubectl get ClusterRole prometheus 
+$ kubectl get ClusterRoleBinding prometheus -n monitoring
+```
+
+```yaml
+3.创建Configmap
+为了让镜像 和 配置文件解耦，以便实现镜像的可移植性和可复用性。
+我们使用Configmap来管理Prometheus的配置文件，此处先使用默认的配置，用于启动Prometheus，后面再根据需要进行修改
+
+$ vim prometheus-config.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval:     15s 
+      evaluation_interval: 15s
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+        - targets: ['localhost:9090']
+        
+```
+
+```yaml
+4. 部署Deployment
+部署Prometheus的实例，并通过Volume挂载的方式，将Prometheus的配置文件挂载到Pod内。另外，在正式环境中建议通过PVC的方式
+
+$ vim prometheus-deployment.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+      - image: prom/prometheus:v2.20.0
+        name: prometheus
+        command:
+        - "/bin/prometheus"
+        args:
+        - "--config.file=/etc/prometheus/config/prometheus.yml"
+        - "--storage.tsdb.path=/data"
+        - "--web.enable-lifecycle"
+        securityContext:
+          runAsUser: 0
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - mountPath: "/etc/prometheus/config/"
+          name: config
+        - name: host-time
+          mountPath: /etc/localtime
+      serviceAccountName: prometheus
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+```
+
+```yaml
+5. 创建Service
+
+$ vim prometheus-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: prometheus
+  name: prometheus
+  namespace: monitoring
+spec:
+  ports:
+  - name: "web"
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: prometheus
+  type: NodePort
+```
+
+访问prometheus：
+
+```shell
+$ kubectl get svc -n monitoring
+NAME         TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+prometheus   NodePort   10.233.66.15   <none>        9090:36223/TCP   7h6m
+```
+
+
+
+查看prometheus服务为nodePort 36223端口：
+
+http://192.168.254.51:36223
+
+查看Targets目标，当前除了监控Prometheus自身实例，还未有其他Kubernetes资源
+
+
+
+#### 2.Kubernetes的服务发现
+
+```
+1. node角色
+2. service角色
+3. Pod角色
+4. endpoints角色
+5. ingress角色
+```
+
+##### 1.监控Node节点
+
+1.`Daemonset部署node-exporter`
+
+```yaml
+$ vim node_exporter-daemonset.yml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: monitoring
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      tolerations:   # 污点容忍
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - image: prom/node-exporter
+        name: node-exporter
+        ports:
+        - name: scrape
+          containerPort: 9100
+          hostPort: 9100
+      hostNetwork: true
+      hostPID: true
+      securityContext:
+        runAsUser: 0
+        
+        
+```
+
+2.`Prometheus配置任务`
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: 'kubernetes-node'
+        kubernetes_sd_configs:
+        - role: node
+        relabel_configs:
+        - source_labels: [__address__]
+          regex: '(.*):10250'
+          replacement: '${1}:9100'
+          target_label: __address__
+          action: replace
+        - action: labelmap
+          regex: __meta_kubernetes_node_label_(.+)
+```
+
+然后，重启prometheus
+
+```shell
+$ kubectl get pod -n monitoring | grep prometheus
+prometheus-7f8d9bb5cb-sd8ff   1/1     Running   0          164m
+
+$ kubectl delete pod prometheus-7f8d9bb5cb-sd8ff -n monitoring
+```
+
+再次访问prometheus：
+
+![image-20230318213438958](D:\Tech\linux\System\assets\image-20230318213438958.png)
+
+
+
+
+
+##### 2.监控容器
+
+prometheus-config.yml文件中添下如下任务：
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: 'kubernetes-cadvisor'
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+        - role: node
+        relabel_configs:
+        - target_label: __address__
+          replacement: kubernetes.default.svc:443
+        - source_labels: [__meta_kubernetes_node_name]
+          regex: (.+)
+          target_label: __metrics_path__
+          replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+        - action: labelmap
+          regex: __meta_kubernetes_node_label_(.+)
+          
+```
+
+应用配置文件，重启prometheus生效
+
+##### 3.监控Kube API Server
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+        - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: default;kubernetes;https
+        - target_label: __address__
+          replacement: kubernetes.default.svc:443
+          
+```
+
+##### 4.监控Kubelet组件
+
+prometheus-config.yml文件中添下如下任务
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: 'k8s-kubelet'
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+        - role: node
+        relabel_configs:
+        - action: labelmap
+          regex: __meta_kubernetes_node_label_(.+)
+        - target_label: __address__
+          replacement: kubernetes.default.svc:443
+        - source_labels: [__meta_kubernetes_node_name]
+          regex: (.+)
+          target_label: __metrics_path__
+          replacement: /api/v1/nodes/${1}/proxy/metrics
+```
+
+##### 5.监控Kubernetes资源
+
+Kubernetes资源对象包括Pod、Deployment、StatefulSets等
+
+使用开源的kube-state-metrics方案来获取监控指标。
+
+
+
+**1. 部署kube-state-metrics**
+
+kube-state-metrics对Kubernetes有版本要求，如下图。
+
+![image-20230319140515803](D:\Tech\linux\System\assets\image-20230319140515803.png)
+
+
+
+```shell
+下载项目仓库
+$ git clone https://github.com/kubernetes/kube-state-metrics.git
+```
+
+```shell
+部署安装
+$ cd kube-state-metrics/
+$ kubectl  apply -f examples/standard/
+
+$ kubectl  get deploy kube-state-metrics -n kube-system   # 查看服务
+NAME                 READY   UP-TO-DATE   AVAILABLE   AGE
+kube-state-metrics   1/1     1            1           6m20s
+```
+
+prometheus-config.yml文件中添下如下任务
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: kube-state-metrics
+        kubernetes_sd_configs:
+        - role: endpoints
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+          regex: kube-state-metrics
+          replacement: $1
+          action: keep
+        - source_labels: [__address__]
+          regex: '(.*):8080'
+          action: keep
+```
+
+##### 6.监控service访问
+
+在Kubernetes集群中，我们可以采用黑盒监控的模式，由Prometheus通过探针的方式对service进行访问探测，以便及时了解业务的可用性。
+
+要实现探针检测，我们需要在集群中安装Blackbox Exporter。
+
+
+
+1.`部署Blackbox Exporter`
+
+```yaml
+$ vim blackbox-exporter.yml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: blackbox-exporter
+  name: blackbox-exporter
+  namespace: monitoring
+spec:
+  ports:
+  - name: blackbox
+    port: 9115
+    protocol: TCP
+  selector:
+    app: blackbox-exporter
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: blackbox-exporter
+  name: blackbox-exporter
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blackbox-exporter
+  template:
+    metadata:
+      labels:
+        app: blackbox-exporter
+    spec:
+      containers:
+      - name: blackbox-exporter
+        image: prom/blackbox-exporter
+        imagePullPolicy: IfNotPresent
+```
+
+2.`Prometheus配置任务`
+
+```yaml
+$ vim prometheus-config.yml
+      - job_name: 'kubernetes-services'
+        kubernetes_sd_configs:
+        - role: service
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]  
+          action: keep
+          regex: true
+        - source_labels: [__address__]
+          target_label: __param_target
+        - target_label: __address__
+          replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
+        - source_labels: [__param_target]
+          target_label: instance
+        - action: labelmap
+          regex: __meta_kubernetes_service_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_service_name]
+          target_label: kubernetes_name
+```
+
+```
+该任务通过service角色发现的方式，获取集群中的service对象；并使用“prometheus.io/probe: true”标签进行过滤，只有包含此注解的service才纳入监控；另外，__address__执行Blackbox Exporter实例的访问地址，并且重写了标签instance的内容。
+```
+
+#### 3.Grafana展示
+
+https://juejin.cn/post/7145097927067697159
+
+#### 4.配置告警规则
+
+https://blog.csdn.net/yanggd1987/article/details/109357238
+
+https://blog.51cto.com/u_15060465/4244148
+
+---
+
+
+
+### 2.监控外部 Kubernetes 集群
+
+https://ost.51cto.com/posts/12449
+
+```
+实际环境中很多企业是将 Prometheus 单独部署在集群外部的。所以监控外部集群非常有必要。
+
+- 首先构造 Prometheus 连接 APIServer 的信息，在通过 kubernetes_sd_configs 做服务发现的时候只需要填入 Kubernetes 集群的 api_server、ca_file、bearer_token_file 信息即可。
+```
+
+创建用于 Prometheus 访问 Kubernetes 资源对象的 RBAC 对象:
+
+```yaml
+$ vim prometheus-rbac.yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: monitoring-token
+  namespace: monitoring
+  annotations:
+    kubernetes.io/service-account.name: "prometheus"
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+```
+
+```shell
+$ kubectl apply -f prometheus-rbac.yml
+```
+
+获取上面的 Prometheus 对应的 Secret 的信息:
+
+```shell
+$ kubectl get secret -n monitoring
+NAME               TYPE                                  DATA   AGE
+monitoring-token   kubernetes.io/service-account-token   3      24s
+```
+
+```shell
+$ kubectl describe secret monitoring-token -n monitoring
+Name:         monitoring-token
+Namespace:    monitoring
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: prometheus
+              kubernetes.io/service-account.uid: f9000dcf-d529-48af-b283-1fa69194426f
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+namespace:  10 bytes
+token:      <token string>
+ca.crt:     1099 bytes
+```
+
+上面的 token 和 ca.crt 信息就是我们用于访问 APIServer 的数据，可以将 token 信息保存到一个名为 k8s.token 的文本文件中
+
+
+
+修改prometheus配置文件：
+
+```yaml
+$ vim prometheus.yml
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+
+  - job_name: k8s-cadvisor
+    honor_timestamps: true
+    metrics_path: /metrics
+    scheme: https
+    kubernetes_sd_configs:  # kubernetes 自动发现
+    - api_server: https://192.168.254.51:6443  # apiserver 地址
+      role: node  # node 类型的自动发现
+      bearer_token_file: k8s.token
+      tls_config:
+        insecure_skip_verify: true
+    bearer_token_file: k8s.token
+    tls_config:
+      insecure_skip_verify: true
+    relabel_configs:
+    - action: labelmap
+      regex: __meta_kubernetes_node_label_(.+)
+    - separator: ;
+      regex: (.*)
+      target_label: __address__
+      replacement: 192.168.254.51:6443
+      action: replace
+    - source_labels: [__meta_kubernetes_node_name]
+      separator: ;
+      regex: (.+)
+      target_label: __metrics_path__
+      replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+      action: replace
+```
+
+现在去 Prometheus 页面就可以看到采集的外部 Kubernetes 集群的数据了
+
+![image-20230318182631495](D:\Tech\linux\System\assets\image-20230318182631495.png)
+
 
 
 ## 8.镜像下载策略
@@ -975,8 +1962,6 @@ https://cloud.tencent.com/developer/article/2047144
 - Always：总是从指定的仓库中获取镜像。
 - Never：使用本地镜像，不从仓库中下载。
 - IfNotPresent：当本地镜像不存在时，才从仓库拉取。
-
-
 
 
 

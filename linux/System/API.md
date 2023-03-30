@@ -1,6 +1,6 @@
 ## 1.阿里云API
 
-1.阿里云cli客户端
+### 1.阿里云cli客户端
 
 阿里云命令行工具（Alibaba Cloud Command Line Interface）是在Alibaba Cloud SDK for Go之上构建的开源工具。您可以在命令行Shell中，使用aliyun命令与阿里云服务进行交互，管理您的阿里云资源
 
@@ -38,6 +38,68 @@ $ aliyun configure set --profile aktest --region cn-hangzhou --access-key-id xxx
 ```shell
 $ aliyun --help           # 查看帮助
 ```
+
+### 2.SDK
+
+[阿里云交易和账单管理API](https://help.aliyun.com/product/87964.html)
+
+首先先在控制台的RAM访问控制中创建一个用户，提供[AliyunBSSReadOnlyAccess](https://ram.console.aliyun.com/policies/AliyunBSSReadOnlyAccess/System/content)权限，并将AccessKeyID和AccessKeySecret记录下来。随后将其替换下面这段代码中对应位置，就可以得到账户余额了。
+
+```python
+$ vim test.py
+import base64
+import datetime
+import hmac
+import json
+import urllib
+from hashlib import sha1
+from random import choice
+ 
+import requests
+ 
+ACCESS_ID = "[你的AccessKey ID]"
+SIGNATURE_KEY = "[你的AccessKey Secret]" + "&"
+URL = "http://business.aliyuncs.com"
+ 
+param = dict()
+param["Action"] = "QueryAccountBalance"
+param["Format"] = "JSON"
+param["Version"] = "2017-12-14"
+param["AccessKeyId"] = ACCESS_ID
+param["SignatureMethod"] = "HMAC-SHA1"
+param["Timestamp"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+param["SignatureVersion"] = "1.0"
+param["SignatureNonce"] = "".join([choice("0123456789ABCDEF") for _ in range(16)])
+ 
+param_str = "&".join(
+    [
+        "{}={}".format(key, urllib.parse.quote(param[key], "-_.~"))
+        for key in sorted(param)
+    ]
+)
+ 
+sign_str = (
+    urllib.parse.quote("POST", "-_.~")
+    + "&"
+    + urllib.parse.quote("/", "-_.~")
+    + "&"
+    + urllib.parse.quote(param_str, "-_.~")
+)
+ 
+signature = base64.b64encode(
+    hmac.new(SIGNATURE_KEY.encode(), sign_str.encode(), sha1).digest()
+).decode()
+param["Signature"] = signature
+ 
+req = requests.post(url=URL, data=param)
+print(json.loads(req.content.decode())["Data"]["AvailableCashAmount"])
+```
+
+```shell
+$ python3 test.py
+```
+
+---
 
 
 
@@ -93,6 +155,10 @@ $ tccli live DescribeLiveStreamOnlineList
 授权： QcloudLIVEReadOnlyAccess
 ```
 
+---
+
+
+
 ## 3.7牛云
 
 qshell安装配置
@@ -105,6 +171,10 @@ Usage:
   
 $ qshell account ak sk name
 ```
+
+---
+
+
 
 ## 4.优刻得API
 

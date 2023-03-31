@@ -8,9 +8,9 @@
 
 安装：
 
-```shell
-$ wget https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz?spm=a2c4g.11186623.0.0.1e525d8cdvgi2s&file=aliyun-cli-linux-latest-amd64.tgz
+[包下载地址](https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz?spm=a2c4g.11186623.0.0.1e525d8cdvgi2s&file=aliyun-cli-linux-latest-amd64.tgz)
 
+```shell
 $ tar -xf aliyun-cli-linux-latest-amd64.tgz
 $ cp aliyun /usr/bin/
 
@@ -23,11 +23,18 @@ https://github.com/aliyun/aliyun-cli/releases?spm=a2c4g.11186623.0.0.1e525d8cdvg
 ```shell
 # 交互式配置：
 $ aliyun configure --profile aktest
+Configuring profile 'aktest' in 'AK' authenticate mode...
+Access Key Id []: xxxxxxxxxx
+Access Key Secret []: xxxxxxxxxxxx
+Default Region Id []: cn-hangzhou
+Default Output Format [json]: json (Only support json)
+Default Language [zh|en] en: 
+Saving profile[aktest] ...Done
 
 --profile: 指定配置名称。如果指定的配置存在，则修改配置。若不存在，则创建配置。
 
 $ aliyun configure list     # 查看
-$ aliyun configure delete--profile aktest
+$ aliyun configure delete--profile aktest    # 删除配置文件
 ```
 
 ```shell
@@ -38,6 +45,31 @@ $ aliyun configure set --profile aktest --region cn-hangzhou --access-key-id xxx
 ```shell
 $ aliyun --help           # 查看帮助
 ```
+
+
+
+```shell
+- 获取账户余额
+
+子账号授权： AliyunBSSReadOnlyAccess
+
+$ aliyun bssopenapi QueryAccountBalance
+{
+	"Code": "200",
+	"Data": {
+		"AvailableAmount": "xxxx",
+		"AvailableCashAmount": "xxxx",
+		"CreditAmount": "0.00",
+		"Currency": "CNY",
+		"MybankCreditAmount": "0.00"
+	},
+	"Message": "success",
+	"RequestId": "Cxxxx8B7-xxxx-xxxx-xxxx-DFBxxxxCE89B",
+	"Success": true
+}
+```
+
+
 
 ### 2.SDK
 

@@ -162,6 +162,7 @@ $ tccli configure
 ```shell
 $ tccli help                # 查看帮助
 tccli help --detail         # 查看详细帮助
+
 $ tccli billing help    # 余额查询帮助
 ```
 
@@ -202,7 +203,11 @@ Usage:
   qshell account [<AccessKey> <SecretKey> <UserName>] [flags]
   
 $ qshell account ak sk name
+
+# qshell只能对存储空间操作
 ```
+
+
 
 ---
 

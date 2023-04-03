@@ -1770,6 +1770,18 @@ print("内存使用率: {0:.2f}%".format(membaifen))
 
 
 
+datetime模块
+
+```
+1. str转换为datetime
+    很多时候，用户输入的日期和时间是字符串，要处理日期和时间，首先必须把str转换为datetime。转换方法是通过datetime.strptime()实现，需要一个日期和时间的格式化字符串：
+
+
+
+```
+
+
+
 ## 14. 脚本
 
 ### 1.USDT兑换人民币汇率

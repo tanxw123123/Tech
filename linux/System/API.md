@@ -246,3 +246,60 @@ $ tail -f /var/spool/mail/root
 $ tail -f /var/log/cron.log
 ```
 
+
+
+## 5.namesilo
+
+https://www.namesilo.com/api-reference
+
+```
+访问：
+https://www.namesilo.com/api/listDomains?version=1&type=xml&key=f338589c2756a2b44f931&withBid=1&pageSize=1400&skipExpired=1
+```
+
+
+
+脚本：
+
+```python
+import requests
+import re
+import time
+import os
+
+token = "5429948026:AAFtWaW1ZcU4IUNaNNtIFfK9qHIYoMjAlgg"
+chat_id = "-613903645"
+
+def gethtml():
+    url = "https://www.namesilo.com/api/listDomains?version=1&type=xml&key=f338589c2756a2b44f931&withBid=1&skipExpired=1"
+    html = requests.get(url).content
+    html = str(html, "utf-8")
+    return html
+
+def sendtelegram(messages):
+    url = "https://api.telegram.org/bot{}/sendMessage?chat_id={}&text={}".format(token, chat_id, str(messages))
+    requests.get(url)
+
+
+html = gethtml()
+
+res = re.findall('expires="(.*?)">(.*?)</domain>', html)
+for i in res:
+    domain = i[1]
+    domain_expire = i[0]
+    domain_expire1 = time.strptime(domain_expire, "%Y-%m-%d")   # 获取格式化时间
+    expire_timestamp = time.mktime(domain_expire1)              # 将格式化时间转换为时间戳
+    now_timestamp = time.time()                                 # 当前时间戳
+    cha = int(expire_timestamp) - int(now_timestamp)
+    days = int(cha / 3600 / 24)
+    if days < 10:           # 域名过期时间小于10天告警
+        message = """=====  域 名 即 将 到 期 报 警  =====
+
+    域名平台：namesilo
+    域名: {0}
+    域名过期时间: {1}
+    剩余天数: {2}
+        """.format(domain, domain_expire, days)
+        sendtelegram(message)
+```
+

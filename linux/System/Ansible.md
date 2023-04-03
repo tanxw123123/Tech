@@ -142,3 +142,92 @@ $ ansible-playbook -i inventory/xxx.hosts deploy.yml -t hostname,init -vv
 -t 参数指定tag执行
 ```
 
+
+
+## 6.playbook
+
+### 1.jinja2模板
+
+```jinja2
+$ vim templates/config.j2
+USER_AGENT_SERVER_IP="{{ server_ip }}"        # 
+
+- 定义变量
+$ vim vars/main.yml
+server_ip: 10.10.10.10
+
+$ vim tasks/install_ossec.yml
+- name: ossec config
+  template: src=config.j2 dest=/var/ossec/etc/ossec.conf mode=0640
+```
+
+
+
+### 2.变量
+
+1. 将变量放在剧本开头的vars中
+
+```yaml
+- name: hostname,init
+  hosts: all
+  gather_facts: no
+  become: yes
+  vars:
+    server_ip: 10.10.10.10
+```
+
+
+
+2.外部文件定义变量
+
+```yaml
+$ cat vars/users.yml
+user: tom
+shell: /sbin/nologin
+
+
+$ vim deploy.yaml
+- name: hostname,init
+  hosts: all
+  gather_facts: no
+  become: yes
+  vars_files:
+    - vars/users.yml
+```
+
+
+
+### 3.loop循环
+
+创建用户
+
+```yaml
+- name: create user
+  user:
+    name:  "{{ item }}"
+    shell: /sbin/nologin
+    state: present
+  loop:
+    - tom
+    - lucy
+```
+
+```yaml
+- 使用变量
+
+$ vim vars/main.yaml
+user_name:
+  - tom
+  - lucy
+  
+
+$ vim  xxx/create_user.yaml
+- name: create user
+  user:
+    name:  "{{ item }}"
+    shell: /sbin/nologin
+    state: present
+  loop: "{{ user_name }}"
+
+```
+

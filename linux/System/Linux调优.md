@@ -1,6 +1,8 @@
 ## 1.系统初始化
 
-ubuntu:
+
+
+### 1.ubuntu
 
 ```shell
 ###################### 虚拟机初始化 ###################
@@ -116,7 +118,44 @@ $ sysctl -p
 
 
 
-centos
+### 2.centos
+
+```shell
+###################### 虚拟机初始化 ###################
+# 修改网络名称为 eth0 
+
+- 添加参数： net.ifnames=0 biosdevname=0
+$ vim /etc/default/grub
+GRUB_CMDLINE_LINUX="crashkernel=auto spectre_v2=retpoline rd.lvm.lv=centos/root rd.lvm.lv=centos/swap rhgb net.ifnames=0 biosdevname=0 quiet"
+
+- 运行命令grub2-mkconfig -o /boot/grub2/grub.cfg来重新生成GRUB配置并更新内核参数
+$ grub2-mkconfig -o /boot/grub2/grub.cfg
+
+$ mv /etc/sysconfig/network-scripts/ifcfg-ens33 /etc/sysconfig/network-scripts/ifcfg-eth0
+$ vim /etc/sysconfig/network-scripts/ifcfg-eth0
+NAME=eth0
+DEVICE=eth0
+
+$ reboot
+
+# 设置静态ip
+$ vim /etc/sysconfig/network-scripts/ifcfg-eth0
+BOOTPROTO=none
+NAME=eth0
+DEVICE=eth0
+ONBOOT=yes
+IPADDR=192.168.254.211
+NETMASK=255.255.255.0
+GATEWAY=192.168.254.254
+DNS1=8.8.8.8
+DNS2=114.114.114.114
+
+# 桥接
+vmware--虚拟网络编辑器--
+手动修改： 桥接到的当前使用的物理网卡
+```
+
+
 
 ```shell
 # timezone ...

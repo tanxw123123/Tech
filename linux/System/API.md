@@ -287,8 +287,8 @@ res = re.findall('expires="(.*?)">(.*?)</domain>', html)
 for i in res:
     domain = i[1]
     domain_expire = i[0]
-    domain_expire1 = time.strptime(domain_expire, "%Y-%m-%d")   # 获取格式化时间
-    expire_timestamp = time.mktime(domain_expire1)              # 将格式化时间转换为时间戳
+    domain_expire1 = time.strptime(domain_expire, "%Y-%m-%d")   # 获取结构化时间
+    expire_timestamp = time.mktime(domain_expire1)              # 将结构化时间转换为时间戳
     now_timestamp = time.time()                                 # 当前时间戳
     cha = int(expire_timestamp) - int(now_timestamp)
     days = int(cha / 3600 / 24)
@@ -301,5 +301,21 @@ for i in res:
     剩余天数: {2}
         """.format(domain, domain_expire, days)
         sendtelegram(message)
+```
+
+
+
+输出到文件告警
+
+```python
+...................
+    if days < 10:
+        now_date = time.strftime("%Y-%m-%d", time.localtime())    # 当前格式化时间
+        filename = now_date + ".txt"
+        os.system("echo {}  {} >> {}".format(domain, domain_expire, filename))
+
+os.system('curl -F chat_id={} -F document=@"{}" https://api.telegram.org/bot{}/sendDocument'.format(chat_id, filename, token))
+messages = "namesilo平台,10天内即将过期域名列表，请及时更新！！！"
+sendtelegram(messages)
 ```
 

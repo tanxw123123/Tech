@@ -231,3 +231,17 @@ $ vim  xxx/create_user.yaml
 
 ```
 
+
+
+### 4.when条件判断
+
+
+
+1.setup模块和条件判断
+
+setup模块用于收集远程主机的一些基本信息
+
+```shell
+
+```
+

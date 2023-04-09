@@ -5,7 +5,54 @@ $ git reset --hard HEAD                # 回滚代码
 $ git checkout -b dev                  # 创建并切换分支
 ```
 
-## 1.windows安装git
+## 1.gitlab部署
+
+```shell
+$ sudo docker run -itd \
+    -p 880:80 \
+	-p 10022:22 \
+	-v /data/gitlab/config:/etc/gitlab \
+    -v /data/gitlab/logs:/var/log/gitlab \
+    -v /data/gitlab/data:/var/opt/gitlab \
+    --restart always \
+    --name gitlab \
+    gitlab/gitlab-ce:latest
+```
+
+修改配置
+
+```shell
+$ vim /data/gitlab/config/gitlab.rb
+external_url 'http://192.168.254.199'             # gitlab访问地址，可以写域名
+gitlab_rails['gitlab_ssh_host'] = '192.168.254.199'   
+gitlab_rails['gitlab_shell_ssh_port'] = 10022
+
+- 生效配置
+$ docker exec -it gitlab /bin/bash
+root@0f5e1874e9a1:/# gitlab-ctl reconfigure
+
+
+```
+
+```yaml
+root@0f5e1874e9a1:/# vi /opt/gitlab/embedded/service/gitlab-rails/config/gitlab.yml
+  
+  gitlab:                                                                                   
+    ## Web server settings (note: host is the FQDN, do not include http://)                 
+    host: 192.168.254.199                              
+    port: 8080           # 修改为 10080
+    https: false
+```
+
+```shell
+- 重启gitlab服务
+root@0f5e1874e9a1:/# gitlab-ctl restart
+
+```
+
+
+
+## 2.windows安装git
 
 [下载安装程序](https://git-scm.com/download/win)
 
